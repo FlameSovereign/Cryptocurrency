@@ -1,0 +1,11 @@
+time_utc,rank,id,symbol,name,market_cap_rank,price_usd,change_24h_pct
+2026-10-30 20:05,1,super-pepe,SP,Super Pepe,931,0.01609296555,-15.89
+2026-10-30 20:05,2,hyperliquid,HYPE,Hyperliquid,10,90.68269131,-3.152
+2026-10-30 20:05,3,bitcoin,BTC,Bitcoin,1,76694.30289,-5.082
+2026-10-30 20:05,4,lighter,LIT,Lighter,87,2.747890076,-10.17
+2026-10-30 20:05,5,near,NEAR,NEAR Protocol,21,4.329246959,-1.512
+2026-10-30 20:05,6,binancecoin,BNB,BNB,4,699.5741876,-6.014
+2026-10-30 20:05,7,aerodrome-finance,AERO,Aerodrome Finance,105,0.6155533598,-8.924
+2026-10-30 20:05,8,aave,AAVE,Aave,49,127.2557196,-4.647
+2026-10-30 20:05,9,uniswap,UNI,Uniswap,25,6.968467056,-2.738
+2026-10-30 20:05,10,chainlink,LINK,Chainlink,17,11.15306181,-4.598
