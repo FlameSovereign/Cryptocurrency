@@ -137,6 +137,9 @@ def render_markdown(outcomes: list[Outcome], ctx: Ctx) -> str:
 
 def main(argv: list[str] | None = None, *, http: Http | None = None, gate: Gate | None = None,
          now: datetime | None = None) -> int:
+    from bot.run import utf8_stdout
+
+    utf8_stdout()  # 中文和 emoji 在 Windows 默认的 GBK 控制台上别崩
     ap = argparse.ArgumentParser(description="爬虫：恐惧贪婪指数 / CoinGecko 热搜 / Gate 涨跌榜 / 美股代币溢价")
     ap.add_argument("--only", help=f"只跑这些数据源（逗号分隔）：{', '.join(SOURCES)}")
     ap.add_argument("--data-dir", default="data", help="CSV 存放目录（默认 data）")

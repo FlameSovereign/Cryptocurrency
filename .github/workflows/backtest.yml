@@ -46,6 +46,7 @@ jobs:
       - run: pip install -r requirements.txt
 
       - name: 回测
+        shell: bash # = bash -eo pipefail：回测报错时这一步要变红，不能被 tee 吃掉
         env:
           BOT: ${{ inputs.bot }}
           STRATEGY: ${{ inputs.strategy }}
@@ -59,5 +60,7 @@ jobs:
           else
             args=(--strategy "$STRATEGY" --symbol "$SYMBOL" --timeframe "$TIMEFRAME" --days "$DAYS" --params "$PARAMS")
           fi
-          python -m bot.backtest "${args[@]}" | tee result.txt
+          status=0
+          python -m bot.backtest "${args[@]}" 2>&1 | tee result.txt || status=$?
           { echo '## 回测结果'; echo; echo '```'; cat result.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"

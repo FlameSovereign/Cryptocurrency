@@ -19,6 +19,11 @@ jobs:
     # 只用公开数据，GitHub 的机器就够了
     runs-on: ${{ vars.CRAWLER_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
+    env:
+      PYTHONUTF8: "1"
     steps:
       - uses: actions/checkout@v5
 

@@ -15,6 +15,10 @@ git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
 case "$cmd" in
   checkout)
+    # 自托管 runner 会复用工作目录：上一次留下的 _data（或者被 git clean 删了目录、但还登记着的 worktree）先清掉
+    git worktree remove --force "$DIR" >/dev/null 2>&1 || true
+    rm -rf "$DIR"
+    git worktree prune
     # 分清“分支不存在”（ls-remote 返回 2，第一次运行）和“网络抽风”（其他非 0）：
     # 网络抽风时绝不能当成第一次运行，否则实盘机器人会拿着空账本再买一遍
     status=1

@@ -632,3 +632,38 @@ def test_sync_rotation_skips_unlisted_symbol_and_tolerates_sub_minimum_dust():
     w.apply(Fill("sell", 2000.0, 0.04994, 99.6), flat_below=3.0)  # 卖完剩 0.00006 ETH ≈ 0.12 USDT：比 dust_value 大、比最小下单小
     notes = sync_rotation(Broker("SOL/USDT", base=1.99, quote=99.5), w, list(prices), prices.get, "t-ks-x", [], 0)
     assert w.holding == "SOL/USDT" and any("WIFX" in n for n in notes)
+
+
+@pytest.mark.parametrize("patch, msg", [
+    ("[live]\nmax-order = 20\n", "不认识的字段"),
+    ("[Live]\nmax_order = 20\n", "不认识的字段"),
+    ("[[bot]]\nname = \"x\"\n", "不认识的字段"),
+    ("[exchange]\nfees = 0.001\n", None),  # [exchange] 已经存在：在原表里加 typo 字段
+])
+def test_config_rejects_typos_outside_bots(tmp_path, patch, msg):
+    p = tmp_path / "c.toml"
+    if patch.startswith("[exchange]"):
+        p.write_text(CONFIG.replace('fee = 0.002\n', 'fee = 0.002\nfees = 0.001\n'))
+    else:
+        p.write_text(CONFIG + patch)
+    with pytest.raises(ValueError, match="不认识的字段"):
+        load_config(p, env={})
+
+
+def test_config_range_checks_percentages(tmp_path):
+    p = tmp_path / "c.toml"
+    p.write_text(CONFIG.replace("fee = 0.002", "fee = 0.1"))  # 想写 0.1% 写成了 10%
+    with pytest.raises(ValueError, match="超出范围"):
+        load_config(p, env={})
+    p.write_text(CONFIG.replace("fee = 0.002", "fee = 0.002\nrebalance_threshold = 2"))
+    with pytest.raises(ValueError, match="超出范围"):
+        load_config(p, env={})
+    p.write_text(CONFIG)
+    assert load_config(p, env={}).max_order == 500
+
+
+def test_empty_bot_mode_falls_back_to_config(tmp_path):
+    p = tmp_path / "c.toml"
+    p.write_text(CONFIG.replace('mode = "paper"', 'mode = "live"'))
+    assert load_config(p, env={"BOT_MODE": ""}).mode == "live"  # Actions 里仓库变量没设 = 空字符串
+    assert load_config(p, env={"BOT_MODE": "paper"}).mode == "paper"

@@ -46,7 +46,7 @@
 
 **别叠止损。** 趋势 / 动量策略自带离场规则，研究里给它们再加 `stop_loss = 0.15`、`trailing_stop = 0.25` 基本都更差（割在下一段行情的起点）。只留 `kill_switch` 当保险丝就好。
 
-**手续费是 0.1% 呢？** Gate 帮助中心写的 VIP0 费率是 0.1%（公开接口写 0.2%，以你账户为准）。按 0.1% 重跑一遍（[research/leaderboard-fee0.1.md](research/leaderboard-fee0.1.md)，`python -m research.leaderboard --fee 0.001`）：日线动量派样本外再多 10~20 个点（`tsmom` +162% → +185%），排名不变；4h 和 1h 还是亏。结论不变：手续费减半也救不了高频。
+**手续费是 0.1% 呢？** Gate 帮助中心写的 VIP0 费率是 0.1%（公开接口写 0.2%，以你账户为准）。按 0.1% 重跑一遍（[research/leaderboard-fee0.1.md](research/leaderboard-fee0.1.md)，`python -m research.leaderboard --fee 0.001 --out research/leaderboard-fee0.1.md`）：日线动量派样本外再多 10~20 个点（`tsmom` +162% → +185%），排名不变；4h 和 1h 还是亏。结论不变：手续费减半也救不了高频。
 
 ### 轮动梭哈（`strategy = "rotation"`）
 
@@ -142,7 +142,7 @@ python -m bot.run --dry-run
    - 给机器人单开一个子账户，只转进机器人的预算
    - 新建 APIv4 key：只开「现货」读写；提现、合约、杠杆、理财全部关掉
    - 绑 IP 白名单，填下面那台电脑的公网 IP。不绑 IP 的 key 90 天自动失效；每个 key 最多绑 20 个 IPv4
-2. **找一台自己的电脑 / 服务器当 runner**：仓库 Settings → Actions → Runners → New self-hosted runner，照着装好、保持开机
+2. **找一台自己的电脑 / 服务器当 runner**：仓库 Settings → Actions → Runners → New self-hosted runner，照着装好、保持开机（Linux / macOS 直接用；Windows 要先装 Git for Windows，workflow 用的是 bash）
    - 机器人**拒绝在 GitHub 托管的机器上跑实盘**：那些机器在美国机房、IP 每次都变，绑不了白名单，而 Gate 把美国列为受限地区
    - 用自托管 runner 时**务必把仓库改成私有**：公开仓库谁都能提 PR，等于能在你电脑上跑代码
 3. **GitHub 配置**

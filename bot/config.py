@@ -179,13 +179,33 @@ def _bot(raw: Mapping, i: int) -> BotConfig:
     )
 
 
+TOP_KEYS = {"exchange", "live", "bots", "crawler", "notify", "research"}
+EXCHANGE_KEYS = {"id", "mode", "fee", "slippage", "rebalance_threshold"}
+LIVE_KEYS = {"max_order"}
+
+
+def _known(d: Mapping, allowed: set, where: str) -> None:
+    unknown = sorted(set(d) - allowed)
+    if unknown:
+        raise ValueError(f"{where} 有不认识的字段 {unknown}（可用：{sorted(allowed)}）——是不是写错了？写错的字段会被悄悄忽略，所以直接报错")
+
+
+def _between(value: float, lo: float, hi: float, name: str, hint: str) -> float:
+    if not lo <= value < hi:
+        raise ValueError(f"{name} = {value:g} 超出范围 [{lo:g}, {hi:g})：{hint}")
+    return value
+
+
 def load_config(path: str | Path | None = None, env: Mapping[str, str] | None = None) -> Config:
     env = os.environ if env is None else env
     path = Path(path) if path else DEFAULT_PATH
     with open(path, "rb") as f:
         raw = tomllib.load(f)
 
+    _known(raw, TOP_KEYS, "config.toml")
     ex = raw.get("exchange") or {}
+    _known(ex, EXCHANGE_KEYS, "[exchange]")
+    _known(raw.get("live") or {}, LIVE_KEYS, "[live]")
     mode = (env.get("BOT_MODE") or ex.get("mode") or "paper").strip().lower()
     if mode not in MODES:
         raise ValueError(f"mode 只能是 paper / live / testnet，收到 {mode!r}")
@@ -197,13 +217,18 @@ def load_config(path: str | Path | None = None, env: Mapping[str, str] | None = 
         raise ValueError(f"机器人重名: {dupes}")
 
     live = raw.get("live") or {}
+    pct = "比例写小数，0.002 = 0.2%"
+    max_order = _num(live, "max_order", 500.0, "live")
+    if max_order <= 0:
+        raise ValueError("[live] max_order 必须大于 0")
     return Config(
         exchange=str(ex.get("id", "gate")),
         mode=mode,
-        fee=_num(ex, "fee", 0.002, "exchange"),
-        slippage=_num(ex, "slippage", 0.0005, "exchange"),
-        rebalance_threshold=_num(ex, "rebalance_threshold", 0.02, "exchange"),
-        max_order=_num(live, "max_order", 1000.0, "live"),
+        fee=_between(_num(ex, "fee", 0.002, "exchange"), 0, 0.05, "[exchange] fee", pct),
+        slippage=_between(_num(ex, "slippage", 0.0005, "exchange"), 0, 0.05, "[exchange] slippage", pct),
+        rebalance_threshold=_between(_num(ex, "rebalance_threshold", 0.02, "exchange"), 0, 0.5,
+                                     "[exchange] rebalance_threshold", "比例写小数，0.02 = 2%"),
+        max_order=max_order,
         bots=bots,
         research=dict(raw.get("research") or {}),
         crawler=dict(raw.get("crawler") or {}),

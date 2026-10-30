@@ -428,7 +428,15 @@ def render(reports: list[dict], mode: str) -> str:
     return "\n".join(lines) + "\n"
 
 
+def utf8_stdout() -> None:
+    """中文 + emoji 的输出在非 UTF-8 控制台（Windows 默认 GBK）上别崩。"""
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure") and (stream.encoding or "").lower().replace("-", "") != "utf8":
+            stream.reconfigure(encoding="utf-8", errors="replace")
+
+
 def main(argv: list[str] | None = None) -> int:
+    utf8_stdout()
     ap = argparse.ArgumentParser(description="梭哈机器人：跑一步")
     ap.add_argument("--config")
     ap.add_argument("--only", help="只跑这些机器人（逗号分隔）")

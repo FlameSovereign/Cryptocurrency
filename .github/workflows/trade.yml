@@ -32,7 +32,11 @@ jobs:
     # 默认用 GitHub 的机器（只能跑模拟盘）；实盘要设仓库变量 RUNNER = self-hosted，用自己的电脑/服务器跑
     runs-on: ${{ vars.RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash # Windows 自托管 runner 也用 bash（要装 Git for Windows）
     env:
+      PYTHONUTF8: "1" # 输出里有中文和 emoji：Windows 控制台默认编码会报错
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
       SERVERCHAN_SENDKEY: ${{ secrets.SERVERCHAN_SENDKEY }}
@@ -61,7 +65,7 @@ jobs:
       - name: 跑一步
         if: inputs.test_notify != true
         env:
-          BOT_MODE: ${{ vars.BOT_MODE || 'paper' }}
+          BOT_MODE: ${{ vars.BOT_MODE }} # 没设就用 config.toml 里的 mode（默认 paper）
           KURUMI_STATE_DIR: _data/state
           KURUMI_DATA_DIR: _data/data # 恐惧贪婪指数接口挂了就用爬虫存的那份
           ONLY: ${{ inputs.only }}
