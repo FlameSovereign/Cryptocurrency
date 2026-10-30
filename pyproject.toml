@@ -1,0 +1,9 @@
+[project]
+name = "kurumi-bot"
+version = "0.1.0"
+description = "土制量化梭哈机器人：GitHub Actions 定时跑，ccxt 下单，自带爬虫和回测"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

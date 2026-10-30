@@ -1,0 +1,47 @@
+name: 爬虫
+
+on:
+  schedule:
+    - cron: "37 */3 * * *" # 每 3 小时一次（UTC）
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: crawler
+  cancel-in-progress: false
+
+jobs:
+  crawl:
+    # 默认开着；仓库变量 CRAWLER_ENABLED = false 关掉。手动触发不受限制
+    if: github.event_name == 'workflow_dispatch' || vars.CRAWLER_ENABLED != 'false'
+    # 只用公开数据，GitHub 的机器就够了
+    runs-on: ${{ vars.CRAWLER_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
+    env:
+      PYTHONUTF8: "1"
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: 安装依赖
+        run: pip install -r requirements.txt
+
+      - name: 取出存档（bot-data 分支）
+        run: bash scripts/data-branch.sh checkout
+
+      - name: 爬
+        run: python -m crawler.run --data-dir _data/data
+
+      - name: 存档
+        if: always()
+        run: |
+          bash scripts/data-branch.sh push "crawler: snapshot"

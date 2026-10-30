@@ -1,0 +1,66 @@
+name: 回测
+
+on:
+  workflow_dispatch:
+    inputs:
+      bot:
+        description: "回测 config.toml 里的某个机器人（填名字；填了就忽略下面几项）"
+        required: false
+        default: ""
+      strategy:
+        description: "策略名"
+        required: false
+        default: "sma_cross"
+      symbol:
+        description: "交易对"
+        required: false
+        default: "BTC/USDT"
+      timeframe:
+        description: "K 线周期（Gate：1h 最多回看约 14 个月，4h 约 4.5 年，1d 不限）"
+        required: false
+        default: "4h"
+      days:
+        description: "回测多少天"
+        required: false
+        default: "730"
+      params:
+        description: '策略参数 JSON，例如 {"fast": 20, "slow": 60}'
+        required: false
+        default: "{}"
+
+permissions:
+  contents: read
+
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: 回测
+        shell: bash # = bash -eo pipefail：回测报错时这一步要变红，不能被 tee 吃掉
+        env:
+          BOT: ${{ inputs.bot }}
+          STRATEGY: ${{ inputs.strategy }}
+          SYMBOL: ${{ inputs.symbol }}
+          TIMEFRAME: ${{ inputs.timeframe }}
+          DAYS: ${{ inputs.days }}
+          PARAMS: ${{ inputs.params }}
+        run: |
+          if [ -n "$BOT" ]; then
+            args=(--bot "$BOT" --days "$DAYS")
+          else
+            args=(--strategy "$STRATEGY" --symbol "$SYMBOL" --timeframe "$TIMEFRAME" --days "$DAYS" --params "$PARAMS")
+          fi
+          status=0
+          python -m bot.backtest "${args[@]}" 2>&1 | tee result.txt || status=$?
+          { echo '## 回测结果'; echo; echo '```'; cat result.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"

@@ -1,0 +1,28 @@
+name: 测试
+
+on:
+  push:
+    branches-ignore: [bot-data]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.13"]
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - run: pip install -r requirements-dev.txt
+
+      - name: 单元测试（不联网）
+        run: python -m pytest
+
+      - name: 配置文件能正常加载
+        run: python -c "from bot.config import load_config; c = load_config(); print(c.exchange, c.mode, [b.name for b in c.bots])"

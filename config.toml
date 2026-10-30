@@ -1,0 +1,116 @@
+# 土制量化梭哈机器人 · 配置
+# 改完 push 到主分支，下一次定时任务就按新配置跑。比例一律写小数：0.15 = 15%。
+# 每个策略的回测成绩见 README.md 和 research/leaderboard.md。
+
+[exchange]
+id = "gate"                 # ccxt 交易所 id
+mode = "paper"              # paper = 模拟盘（不碰真钱）；live = 实盘；testnet = Gate 测试网。仓库变量 BOT_MODE 可以覆盖
+fee = 0.002                 # 模拟盘 / 回测用的手续费率。Gate 公开接口写 0.2%、帮助中心写 VIP0 是 0.1%，以账户实际为准（实盘体检会打印）
+slippage = 0.0005           # 模拟盘 / 回测默认滑点
+rebalance_threshold = 0.02  # 目标仓位和当前仓位差不到 2% 就不折腾
+
+[live]
+max_order = 500             # 单笔买入最多花多少计价币（防手滑），模拟盘也照这个卡
+
+# ================= 机器人 =================
+# 每个 [[bots]] 是一个独立机器人，各记各的账。实盘时所有机器人（paper_only 的除外）预算加起来
+# 别超过账户余额，最好给机器人单开一个子账户。可选字段：size（梭哈系数，默认 1）、params、risk、
+# slippage、enabled、paper_only。
+
+# 1) 时间序列动量 · BTC 日线：近 14 天涨超 5% 就梭，涨幅转负就跑。排行榜里加密日线全样本、样本外都排第一档。
+[[bots]]
+name = "btc-momentum"
+symbol = "BTC/USDT"
+timeframe = "1d"
+strategy = "tsmom"
+budget = 100
+risk = { kill_switch = 0.5 }    # 净值跌到预算一半：清仓罢工
+
+# 2) 轮动梭哈 · 加密篮子日线：近 30 天涨得最猛的币全仓梭哈；第一名都没涨就拿现金；
+#    新第一名要比手里的多涨 10 个百分点才换车。轮动机器人只支持 kill_switch。
+[[bots]]
+name = "alt-rotation"
+strategy = "rotation"
+symbols = ["BTC/USDT", "ETH/USDT", "SOL/USDT", "DOGE/USDT", "GT/USDT"]
+timeframe = "1d"
+budget = 100
+params = { lookback = 30, margin = 0.10 }
+risk = { kill_switch = 0.5 }
+
+# 3) 跟着情绪走 · ETH 日线：恐惧贪婪指数 ≥ 70 上车、≤ 40 下车。
+#    和“别人恐惧我贪婪”反着来——回测里反着来的才赚钱。
+[[bots]]
+name = "eth-mood"
+symbol = "ETH/USDT"
+timeframe = "1d"
+strategy = "sentiment_momentum"
+budget = 100
+risk = { kill_switch = 0.5 }
+
+# ---------- 对照组：只在模拟盘跑，切到实盘自动跳过 ----------
+# 实盘机器人连这俩都跑不赢的话……就该反思了。
+
+[[bots]]
+name = "btc-hodl"
+symbol = "BTC/USDT"
+timeframe = "1d"
+strategy = "hodl"
+budget = 100
+paper_only = true
+
+[[bots]]
+name = "btc-monkey"
+symbol = "BTC/USDT"
+timeframe = "1d"
+strategy = "monkey"
+budget = 100
+params = { hold = 7 }           # 每 7 天重新扔一次骰子
+paper_only = true
+
+# ---------- 备选：默认关闭，想玩就改 enabled = true ----------
+
+# 股票代币：研究结论是只建议日线囤着（research/notes/stock_tokens.md），盘口薄所以滑点设大点。
+[[bots]]
+name = "spyx-hodl"
+symbol = "SPYX/USDT"
+timeframe = "1d"
+strategy = "hodl"
+budget = 100
+slippage = 0.001
+enabled = false
+
+# 海龟突破 · SOL 日线：突破 20 日新高就梭，跌破 10 日新低就跑。
+[[bots]]
+name = "sol-turtle"
+symbol = "SOL/USDT"
+timeframe = "1d"
+strategy = "donchian"
+budget = 100
+risk = { kill_switch = 0.5 }
+enabled = false
+
+# ================= 爬虫 =================
+# .github/workflows/crawl.yml 每 3 小时跑一次，CSV 存到 bot-data 分支的 data/。只用公开接口，不需要密钥。
+[crawler]
+sources = ["fear_greed", "trending", "gate_movers", "stock_tokens"]  # 删掉就不爬
+min_interval_minutes = 20   # 离上一份快照不到这么久就不重复记（手动重跑不会刷出重复行）；0 = 不限制
+
+[crawler.trending]
+top_n = 10                  # CoinGecko 热搜只记前 N 名
+
+[crawler.gate_movers]
+min_quote_volume = 500000   # 24h 成交额（USDT）低于这个的币不上榜
+top_n = 10                  # 涨幅榜、跌幅榜各记前 N 名
+exclude_leveraged = true    # 排除 BTC3L / ETH5S 这类杠杆代币
+
+[crawler.stock_tokens]
+tickers = ["SPY", "QQQ", "NVDA", "TSLA", "AAPL"]  # 去 Gate 找 <代码>X/USDT（xStocks）和 <代码>ON/USDT（Ondo）
+suffixes = ["X", "ON"]
+
+# ================= 推送 =================
+# 密钥只放 GitHub Secrets：SERVERCHAN_SENDKEY / PUSHPLUS_TOKEN（微信，国内推荐）、
+# TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID、BARK_KEY（+ 可选 BARK_SERVER）。这里只放不涉密的选项。
+# 配好后在 Actions → 梭哈机器人 → Run workflow 勾上「只发一条测试推送」试一下。
+[notify]
+# channels = ["serverchan", "pushplus"]  # 只用这几个渠道；不写 = 配了密钥的全用；写 [] = 全部关掉
+timeout = 10

@@ -1,0 +1,39 @@
+name: Runner 体检
+
+# 装好 self-hosted runner 之后手动跑一次：看这台机器的公网 IP（填 Gate API key 白名单）、
+# 能不能连上 Gate 和 GitHub、时钟准不准。不需要 API key，不下单。
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ${{ vars.RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: bash
+    env:
+      PYTHONUTF8: "1"
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        if: vars.PYTHON_SETUP != 'system'
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: 用机器自带的 Python
+        if: vars.PYTHON_SETUP == 'system'
+        run: |
+          python3 -m venv .venv
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+
+      - name: 安装依赖
+        run: pip install -r requirements.txt
+
+      - name: 体检
+        run: python -m bot.doctor
