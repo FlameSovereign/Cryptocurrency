@@ -471,6 +471,14 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     summary = os.environ.get("GITHUB_STEP_SUMMARY")
+    if cfg.mode != "paper" and os.environ.get("BOT_ARMED", "true") != "true":
+        # 模拟盘的定时任务默认开着，实盘不行：必须显式设 BOT_ENABLED = true（config.toml 里改 mode 也不算数）
+        msg = "⛔ 实盘 / 测试网的定时任务要显式打开：仓库变量 BOT_ENABLED 设成 true。这次什么都没做。"
+        print(msg, file=sys.stderr)
+        if summary:
+            with open(summary, "a") as f:
+                f.write(msg + "\n")
+        return 2
     if cfg.mode != "paper" and os.environ.get("RUNNER_ENVIRONMENT") == "github-hosted":
         print(HOSTED_LIVE_REFUSAL, file=sys.stderr)
         if summary:

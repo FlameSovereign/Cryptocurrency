@@ -25,6 +25,15 @@ PAGE = 1000
 POINTS_BACK = {"gate": 10_000}
 
 
+def force_ipv4() -> None:
+    """只走 IPv4 连接：Gate API key 的 IP 白名单只收 IPv4，机器有 IPv6 时请求可能从 IPv6 出去被拒。"""
+    import socket
+
+    import urllib3.util.connection as conn
+
+    conn.allowed_gai_family = lambda: socket.AF_INET
+
+
 def make_exchange(exchange_id: str, *, auth: bool = False, testnet: bool = False):
     """创建 ccxt 交易所对象。auth=True 时从环境变量读 API key（GitHub Secrets 注入）。
 
@@ -43,6 +52,7 @@ def make_exchange(exchange_id: str, *, auth: bool = False, testnet: bool = False
         if not key or not secret:
             raise RuntimeError(f"{'测试网' if testnet else '实盘'}模式需要设置 {prefix}_KEY 和 {prefix}_SECRET")
         cfg.update(apiKey=key, secret=secret)
+        force_ipv4()
         password = os.environ.get("EXCHANGE_API_PASSWORD", "").strip()
         if password:
             cfg["password"] = password

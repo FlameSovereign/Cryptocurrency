@@ -43,6 +43,13 @@
   - macOS：在 runner 目录里 `./svc.sh install`，再 `./svc.sh start`（不用 sudo）
   - Windows：配置时问 run as service 选 Y
 - 回到 Runners 页面，看到它显示 **Idle**（绿点）就成了
+- 加一个仓库变量 `RUNNER` = `self-hosted`（Settings → Secrets and variables → Actions → Variables），以后机器人的任务就派给这台机器
+
+然后 Actions → **Runner 体检** → Run workflow。跑完的 Summary 会告诉你：
+
+- 这台机器的**公网 IPv4**（下一步填 Gate 白名单用）
+- 能不能连上 Gate 和 GitHub，时钟和 Gate 差几秒
+- 最后一行 ✅ 才往下走
 
 **Python**：workflow 会用 `actions/setup-python` 自动装 Python 3.12（第一次下载，之后有缓存）。如果你的系统它不支持（树莓派、群晖这类非 Ubuntu 的 Linux），先在机器上装好 Python 3.11 以上，再加一个仓库变量 `PYTHON_SETUP` = `system`。
 
@@ -53,7 +60,7 @@
 1. **子账户**：给机器人单开一个，从主账户划转机器人的预算（USDT）进去。机器人只动自己账本里的钱，但钱物理隔离最省心
 2. **在子账户里建 APIv4 key**（要先实名、设好资金密码和二次验证）：
    - 权限**只开「现货」读写**；提现、合约、杠杆、理财全部关掉
-   - IP 白名单：填 runner 那台机器的公网 IP（在那台机器上 `curl ip.sb` 看）
+   - IP 白名单：填「Runner 体检」报出来的公网 IPv4（机器人连 Gate 只走 IPv4）
      - 家里宽带的 IP 可能会变：变了以后机器人会报 key 无效（你会收到报错推送），去 Gate 改一下白名单就好
      - 也可以不绑：那样 key 90 天自动失效，到期前 Gate 会提醒，换新 key 后更新 GitHub Secret
    - 经典账户、统一账户都支持；统一账户里别开自动借币
@@ -67,10 +74,9 @@
 | Secret | `EXCHANGE_API_KEY` | Gate 的 key |
 | Secret | `EXCHANGE_API_SECRET` | Gate 的 secret |
 | Secret | `SERVERCHAN_SENDKEY` 或 `PUSHPLUS_TOKEN` | 微信推送（可选，强烈建议） |
-| Variable | `RUNNER` | `self-hosted` |
 | Variable | `BOT_MODE` | `live`（想先演练就填 `testnet`，见文末） |
 
-先**别**开 `BOT_ENABLED`。
+先**别**设 `BOT_ENABLED`：没设的时候实盘的定时任务根本不会跑（模拟盘默认开、实盘默认关），正好留给下一步空跑。
 
 ## 第 5 步：检查 config.toml
 
@@ -89,13 +95,14 @@ Actions → 梭哈机器人 → Run workflow → 勾上「只看信号」→ Run
 
 ## 第 7 步：上线
 
-Variables 加 `BOT_ENABLED` = `true`。之后每小时第 7 分钟左右自动跑一次，有成交、止损、熔断、报错都会推送。
+Variables 加 `BOT_ENABLED` = `true`（实盘只认这个显式开关，config.toml 里改 mode 不算数）。之后每小时第 7 分钟左右自动跑一次，有成交、止损、熔断、报错都会推送。
 
 ## 日常操作
 
 | 想干嘛 | 怎么做 |
 |---|---|
 | 暂停自动交易 | `BOT_ENABLED` 改成 `false`（手里的币不会动） |
+| 换了网络 / IP 变了 | 再跑一次「Runner 体检」，把新 IP 填进 Gate 白名单 |
 | 某个机器人卖光收工 | config 里给它加 `liquidate = true`，push；不想等一小时就手动 Run workflow 一次 |
 | 熔断后复活 / 清空战绩 | config 里加 `reset = "随便一个新值"`（实盘要先空仓；以后想再重置就换个值） |
 | 加减预算 | 直接改 `budget`（减预算按比例从净值里抽，收益率不变） |

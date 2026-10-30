@@ -690,3 +690,13 @@ def test_rotation_liquidate(rot):
     assert rotation_tick(bot, cfg, ex=ex, broker=broker)["holding"] == "ETH/USDT"
     r = rotation_tick(dataclasses.replace(bot, liquidate=True), cfg, ex=ex, broker=broker)
     assert r["event"] == "liquidate" and r["holding"] is None and [f["side"] for f in r["fills"]] == ["sell"]
+
+
+def test_scheduled_live_needs_explicit_arming(tmp_path, monkeypatch):
+    """模拟盘定时任务默认开着；实盘要显式 BOT_ENABLED = true（workflow 传 BOT_ARMED）。"""
+    p = tmp_path / "c.toml"
+    p.write_text(CONFIG)
+    monkeypatch.setenv("RUNNER_ENVIRONMENT", "self-hosted")
+    monkeypatch.setenv("BOT_ARMED", "false")
+    monkeypatch.setattr(run_mod, "make_exchange", lambda *a, **k: pytest.fail("不该连交易所"))
+    assert run_mod.main(["--config", str(p), "--mode", "live"]) == 2

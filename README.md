@@ -119,16 +119,11 @@ python -m bot.run --dry-run
 
 `--dry-run` 只看信号不下单不存盘。不加就是真的跑一步模拟盘（状态写到 `state/paper/`）。
 
-### 2. 在 GitHub 上开模拟盘
+### 2. GitHub 上的模拟盘：默认就开着
 
-仓库 → **Settings → Secrets and variables → Actions → Variables**，新建：
+代码在默认分支上，模拟盘机器人每小时、爬虫每 3 小时就会自动跑，什么都不用配。想关掉：仓库 **Settings → Secrets and variables → Actions → Variables** 里新建 `BOT_ENABLED` = `false` 或 `CRAWLER_ENABLED` = `false`。
 
-| 变量 | 值 | 作用 |
-|---|---|---|
-| `BOT_ENABLED` | `true` | 机器人定时任务总开关 |
-| `CRAWLER_ENABLED` | `true` | 爬虫定时任务总开关 |
-
-然后在 **Actions** 页面能看到「梭哈机器人」每小时跑一次，每次运行的 Summary 里有一张表：每个机器人做了什么、净值多少。账本、成交记录、净值曲线在 `bot-data` 分支的 `state/` 目录，爬虫数据在 `data/` 目录。
+**Actions** 页面能看到「梭哈机器人」每小时跑一次，每次运行的 Summary 里有一张表：每个机器人做了什么、净值多少。账本、成交记录、净值曲线在 `bot-data` 分支的 `state/` 目录，爬虫数据在 `data/` 目录。
 
 想马上跑一次：Actions → 梭哈机器人 → Run workflow。
 
@@ -144,13 +139,13 @@ python -m bot.run --dry-run
    - 给机器人单开一个子账户，只转进机器人的预算
    - 新建 APIv4 key：只开「现货」读写；提现、合约、杠杆、理财全部关掉
    - 绑 IP 白名单，填下面那台电脑的公网 IP。不绑 IP 的 key 90 天自动失效；每个 key 最多绑 20 个 IPv4
-2. **找一台自己的电脑 / 服务器当 runner**：仓库 Settings → Actions → Runners → New self-hosted runner，照着装好、保持开机（Linux / macOS 直接用；Windows 要先装 Git for Windows，workflow 用的是 bash）
+2. **找一台自己的电脑 / 服务器当 runner**（装好后在 Actions 里跑一次「Runner 体检」，会告诉你这台机器的公网 IP、能不能连上 Gate、时钟准不准）：仓库 Settings → Actions → Runners → New self-hosted runner，照着装好、保持开机（Linux / macOS 直接用；Windows 要先装 Git for Windows，workflow 用的是 bash）
    - 机器人**拒绝在 GitHub 托管的机器上跑实盘**：那些机器在美国机房、IP 每次都变，绑不了白名单，而 Gate 把美国列为受限地区
    - 用自托管 runner 时**务必把仓库改成私有**：公开仓库谁都能提 PR，等于能在你电脑上跑代码
 3. **GitHub 配置**
    - Secrets：`EXCHANGE_API_KEY`、`EXCHANGE_API_SECRET`
    - Variables：`RUNNER` = `self-hosted`、`BOT_MODE` = `live`
-4. **先空跑一次**：Actions → 梭哈机器人 → Run workflow，勾上「只看信号」。Summary 里会有 API key 体检（绑没绑 IP、账户实际费率、是不是统一账户）和每个机器人的信号。没问题再打开 `BOT_ENABLED`。
+4. **先空跑一次**：Actions → 梭哈机器人 → Run workflow，勾上「只看信号」。Summary 里会有 API key 体检（绑没绑 IP、账户实际费率、是不是统一账户）和每个机器人的信号。没问题再设 `BOT_ENABLED` = `true`——模拟盘默认开着，**实盘的定时任务必须显式打开**，不然机器人会拒绝。
 5. 对照组（`paper_only = true` 的囤币和猴子）在实盘模式会自动跳过，不会碰真钱。`[live] max_order` 是单笔买入上限，先设小点。
 
 想先用假钱走一遍真实下单流程：Gate 有测试网（testnet.gate.com，建 key 时账户类型选 Testnet），把 key 放进 `EXCHANGE_TESTNET_API_KEY` / `EXCHANGE_TESTNET_API_SECRET`，`BOT_MODE` = `testnet`。测试网同样只在自托管 runner 上跑。
@@ -276,6 +271,7 @@ bot/                机器人本体
   brokers.py        模拟盘撮合 / Gate 实盘下单
   backtest.py       回测
   run.py            Actions 每次跑的入口
+  doctor.py         Runner 体检（公网 IP、连通性、时钟）
 crawler/            爬虫
 research/           研究台、排行榜、研究笔记
 docs/live.md        实盘指南

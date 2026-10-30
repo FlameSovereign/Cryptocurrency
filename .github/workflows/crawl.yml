@@ -14,8 +14,8 @@ concurrency:
 
 jobs:
   crawl:
-    # 总开关：仓库变量 CRAWLER_ENABLED = true 时定时任务才跑；手动触发不受限制
-    if: vars.CRAWLER_ENABLED == 'true' || github.event_name == 'workflow_dispatch'
+    # 默认开着；仓库变量 CRAWLER_ENABLED = false 关掉。手动触发不受限制
+    if: github.event_name == 'workflow_dispatch' || vars.CRAWLER_ENABLED != 'false'
     # 只用公开数据，GitHub 的机器就够了
     runs-on: ${{ vars.CRAWLER_RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 15

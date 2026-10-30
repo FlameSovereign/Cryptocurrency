@@ -27,8 +27,12 @@ concurrency:
 
 jobs:
   tick:
-    # 总开关：仓库变量 BOT_ENABLED = true 时定时任务才真的跑；手动触发不受限制
-    if: vars.BOT_ENABLED == 'true' || github.event_name == 'workflow_dispatch'
+    # 定时任务：模拟盘默认开着（仓库变量 BOT_ENABLED = false 关掉）；实盘 / 测试网必须显式设 BOT_ENABLED = true。
+    # 手动触发不受限制。
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      vars.BOT_ENABLED == 'true' ||
+      (vars.BOT_ENABLED != 'false' && (vars.BOT_MODE == '' || vars.BOT_MODE == 'paper'))
     # 默认用 GitHub 的机器（只能跑模拟盘）；实盘要设仓库变量 RUNNER = self-hosted，用自己的电脑/服务器跑
     runs-on: ${{ vars.RUNNER || 'ubuntu-latest' }}
     timeout-minutes: 15
@@ -75,6 +79,7 @@ jobs:
         if: inputs.test_notify != true
         env:
           BOT_MODE: ${{ vars.BOT_MODE }} # 没设就用 config.toml 里的 mode（默认 paper）
+          BOT_ARMED: ${{ vars.BOT_ENABLED == 'true' || github.event_name == 'workflow_dispatch' }} # 实盘定时任务的保险
           KURUMI_STATE_DIR: _data/state
           KURUMI_DATA_DIR: _data/data # 恐惧贪婪指数接口挂了就用爬虫存的那份
           ONLY: ${{ inputs.only }}
