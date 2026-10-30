@@ -1,0 +1,32 @@
+# 土制量化梭哈机器人 · 配置
+# 改完 push，下一次定时任务就按新配置跑。比例一律写小数：0.15 = 15%。
+
+[exchange]
+id = "gate"                 # ccxt 交易所 id
+mode = "paper"              # paper = 模拟盘（不碰真钱）；live = 实盘。GitHub 仓库变量 BOT_MODE 可以覆盖
+fee = 0.002                 # 模拟盘 / 回测用的手续费率
+slippage = 0.0005           # 模拟盘 / 回测默认滑点
+rebalance_threshold = 0.02  # 目标仓位和当前仓位差不到 2% 就不折腾
+
+[live]
+max_order = 500             # 实盘单笔买入最多花多少计价币（防手滑）
+
+# 每个 [[bots]] 是一个独立机器人：一个交易对、一个策略、一份预算，各记各的账。
+# 同一个账户里跑多个机器人时：别让两个机器人交易同一个币，预算加起来别超过账户余额。
+
+[[bots]]
+name = "btc-hodl"
+symbol = "BTC/USDT"
+timeframe = "1d"
+strategy = "hodl"
+budget = 100
+
+[[bots]]
+name = "btc-monkey"
+symbol = "BTC/USDT"
+timeframe = "1h"
+strategy = "monkey"
+budget = 100
+params = { hold = 24 }
+risk = { kill_switch = 0.5 }
+enabled = false
