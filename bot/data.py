@@ -25,8 +25,11 @@ PAGE = 1000
 POINTS_BACK = {"gate": 10_000}
 
 
-def make_exchange(exchange_id: str, *, auth: bool = False):
-    """创建 ccxt 交易所对象。auth=True 时从环境变量读 API key（GitHub Secrets 注入）。"""
+def make_exchange(exchange_id: str, *, auth: bool = False, testnet: bool = False):
+    """创建 ccxt 交易所对象。auth=True 时从环境变量读 API key（GitHub Secrets 注入）。
+
+    testnet=True 读测试网专用的 EXCHANGE_TESTNET_API_KEY / EXCHANGE_TESTNET_API_SECRET（Gate 测试网的 key 是单独建的）。
+    """
     import ccxt
 
     cls = getattr(ccxt, exchange_id, None)
@@ -34,10 +37,11 @@ def make_exchange(exchange_id: str, *, auth: bool = False):
         raise ValueError(f"ccxt 里没有交易所 {exchange_id!r}")
     cfg = {"enableRateLimit": True, "timeout": 20_000}
     if auth:
-        key = os.environ.get("EXCHANGE_API_KEY", "").strip()
-        secret = os.environ.get("EXCHANGE_API_SECRET", "").strip()
+        prefix = "EXCHANGE_TESTNET_API" if testnet else "EXCHANGE_API"
+        key = os.environ.get(f"{prefix}_KEY", "").strip()
+        secret = os.environ.get(f"{prefix}_SECRET", "").strip()
         if not key or not secret:
-            raise RuntimeError("实盘模式需要设置 EXCHANGE_API_KEY 和 EXCHANGE_API_SECRET")
+            raise RuntimeError(f"{'测试网' if testnet else '实盘'}模式需要设置 {prefix}_KEY 和 {prefix}_SECRET")
         cfg.update(apiKey=key, secret=secret)
         password = os.environ.get("EXCHANGE_API_PASSWORD", "").strip()
         if password:
@@ -164,8 +168,33 @@ def fetch_recent(ex, symbol: str, timeframe: str, bars: int) -> list[Candle]:
 
 # ---------------- 恐惧贪婪指数 ----------------
 
-def fetch_fear_greed(limit: int = 0, *, use_cache: bool = False, offline: bool = False, max_age_s: int = 6 * 3600) -> FearGreed:
-    """alternative.me 恐惧贪婪指数。limit=0 表示全部历史（2018-02 起）。"""
+def read_fear_greed_csv(path: Path) -> FearGreed:
+    """爬虫存的 data/fear_greed.csv（date,value,classification）。"""
+    from datetime import datetime, timezone
+
+    data = {}
+    with open(path, newline="") as f:
+        for row in csv.DictReader(f):
+            day = datetime.strptime(row["date"], "%Y-%m-%d").replace(tzinfo=timezone.utc)
+            data[int(day.timestamp() * 1000)] = int(row["value"])
+    return FearGreed(data)
+
+
+def fetch_fear_greed(limit: int = 0, *, use_cache: bool = False, offline: bool = False, max_age_s: int = 6 * 3600,
+                     fallback_csv: Path | None = None) -> FearGreed:
+    """alternative.me 恐惧贪婪指数。limit=0 表示全部历史（2018-02 起）。
+
+    接口挂了而 fallback_csv（爬虫存的那份）存在时，用 CSV 顶上。
+    """
+    try:
+        return _fetch_fear_greed(limit, use_cache=use_cache, offline=offline, max_age_s=max_age_s)
+    except Exception:
+        if fallback_csv is not None and Path(fallback_csv).exists():
+            return read_fear_greed_csv(Path(fallback_csv))
+        raise
+
+
+def _fetch_fear_greed(limit: int, *, use_cache: bool, offline: bool, max_age_s: int) -> FearGreed:
     cache = CACHE_DIR / "fear_greed.json"
     if (use_cache or offline) and cache.exists():
         blob = json.loads(cache.read_text())

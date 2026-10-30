@@ -41,32 +41,46 @@ def _one(job):
 
 
 def _monkey(job):
-    sym, tf = job
+    """猴子和策略从同一根 K 线起跑：full 段从策略 warmup 结束处开始，out 段从切分点开始。"""
+    sym, tf, start_ms = job
     try:
-        p50, p90 = H.monkey_band(sym, tf)
+        _, p90 = H.monkey_band(sym, tf, start_ms=start_ms)
         cut = H.split_ts(sym, tf, 0.6)
-        _, p90_out = H.monkey_band(sym, tf, start_ms=cut)
+        _, p90_out = H.monkey_band(sym, tf, start_ms=max(cut, start_ms))
     except (ValueError, FileNotFoundError):
         return job, None
-    return job, {"full": p90, "out": p90_out, "p50": p50}
+    return job, {"full": p90, "out": p90_out}
+
+
+def _start_ms(name: str, sym: str, tf: str) -> int | None:
+    from bot.strategies import get
+
+    s = get(name)
+    c = H.candles(sym, tf)
+    look = s.lookback(s.resolve({}))
+    return c[look - 1].ts if len(c) > look else None
 
 
 def build(names: list[str], timeframes: list[str], workers: int) -> dict:
     syms = H.CRYPTO + H.STOCKS
     jobs = [(n, s, tf) for n in names for tf in timeframes for s in syms]
+    starts = {j: _start_ms(*j) for j in jobs}
+    monkey_jobs = sorted({(s, tf, st) for (n, s, tf), st in starts.items() if st is not None})
     with ProcessPoolExecutor(max_workers=workers) as pool:
-        monkeys = dict(pool.map(_monkey, [(s, tf) for tf in timeframes for s in syms]))
+        bands = dict(pool.map(_monkey, monkey_jobs, chunksize=2))
         results = dict(pool.map(_one, jobs, chunksize=4))
+    monkeys = {j: bands.get((j[1], j[2], st)) for j, st in starts.items() if st is not None}
     return {"results": results, "monkeys": monkeys}
 
 
-def _agg(rows, seg, monkeys, syms, tf):
+def _agg(name, rows, seg, monkeys, tf):
     ok = [(s, r[seg]) for s, r in rows if seg in r]
     if not ok:
         return None
     med = statistics.median
     beat_hodl = sum(x["ret"] > x["hodl"] + 1e-6 for _, x in ok)
-    beat_monkey = sum(1 for s, x in ok if monkeys.get((s, tf)) and x["ret"] > monkeys[(s, tf)][seg])
+    band = {s: monkeys.get((name, s, tf)) for s, _ in ok}
+    beat_monkey = sum(1 for s, x in ok if band[s] and x["ret"] > band[s][seg])
     return {"n": len(ok), "ret": med(x["ret"] for _, x in ok), "hodl": med(x["hodl"] for _, x in ok),
             "mdd": med(x["mdd"] for _, x in ok), "hodl_mdd": med(x["hodl_mdd"] for _, x in ok),
             "sharpe": med(x["sharpe"] for _, x in ok), "fills": med(x["fills"] for _, x in ok),
@@ -85,7 +99,7 @@ def render(data: dict, names: list[str], timeframes: list[str]) -> str:
             for seg, seg_name in (("full", "全样本"), ("out", "样本外")):
                 rows = []
                 for n in names:
-                    a = _agg([(s, res.get((n, s, tf), {})) for s in syms], seg, monkeys, syms, tf)
+                    a = _agg(n, [(s, res.get((n, s, tf), {})) for s in syms], seg, monkeys, tf)
                     if a:
                         rows.append((n, a))
                 if not rows:

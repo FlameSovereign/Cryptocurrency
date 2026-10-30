@@ -8,19 +8,22 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Mapping
 
+from . import rotation
 from .candles import timeframe_ms
 from .engine import Risk
 from .strategies import get as get_strategy
 
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_PATH = ROOT / "config.toml"
-MODES = ("paper", "live")
+MODES = ("paper", "live", "testnet")
+BOT_KEYS = {"name", "symbol", "symbols", "timeframe", "strategy", "budget", "params", "size", "risk", "slippage", "enabled",
+            "paper_only"}
 
 
 @dataclass(frozen=True)
 class BotConfig:
     name: str
-    symbol: str
+    symbol: str  # 单币机器人的交易对；轮动机器人为空字符串
     timeframe: str
     strategy: str
     budget: float
@@ -29,6 +32,19 @@ class BotConfig:
     risk: Risk = Risk()
     slippage: float | None = None  # 覆盖全局滑点（股票代币盘口薄，可以设大点）
     enabled: bool = True
+    symbols: tuple[str, ...] = ()  # 轮动机器人的篮子（单币机器人为空）
+    paper_only: bool = False  # 只在模拟盘跑（对照组用）：切到实盘/测试网时自动跳过，永远不碰真钱
+
+    @property
+    def is_rotation(self) -> bool:
+        return rotation.is_rotation(self.strategy)
+
+    @property
+    def label(self) -> str:
+        """报告里显示的标的：单币就是交易对，轮动是篮子。"""
+        if self.is_rotation:
+            return "轮动 " + "/".join(rotation.base(s) for s in self.symbols)
+        return self.symbol
 
     @property
     def base(self) -> str:
@@ -36,7 +52,7 @@ class BotConfig:
 
     @property
     def quote(self) -> str:
-        return self.symbol.split("/")[1].split(":")[0]
+        return (self.symbol or self.symbols[0]).split("/")[1].split(":")[0]
 
 
 @dataclass(frozen=True)
@@ -65,24 +81,61 @@ def _num(d: Mapping, key: str, default: float, where: str) -> float:
     return float(v)
 
 
+def _flag(d: Mapping, key: str, default: bool, where: str) -> bool:
+    v = d.get(key, default)
+    if not isinstance(v, bool):
+        raise ValueError(f"{where}.{key} 要写 true 或 false（不加引号），收到 {v!r}")
+    return v
+
+
+def _symbols(value, where: str) -> tuple[str, ...]:
+    """轮动篮子：至少两个交易对、不重复、计价货币一致（钱包里的现金只有一种）。"""
+    if isinstance(value, str) or not isinstance(value, (list, tuple)):
+        raise ValueError(f'{where}.symbols 要写成列表，比如 ["BTC/USDT", "ETH/USDT", "SOL/USDT"]')
+    syms = tuple(str(s).strip().upper() for s in value)
+    if len(syms) < 2:
+        raise ValueError(f"{where}.symbols 至少要两个交易对，一个币没法轮动")
+    bad = [s for s in syms if "/" not in s]
+    if bad:
+        raise ValueError(f"{where}.symbols 里的 {bad} 要写成 BTC/USDT 这种格式")
+    dupes = sorted({s for s in syms if syms.count(s) > 1})
+    if dupes:
+        raise ValueError(f"{where}.symbols 有重复的交易对 {dupes}")
+    quotes = sorted({s.split("/")[1].split(":")[0] for s in syms})
+    if len(quotes) > 1:
+        raise ValueError(f"{where}.symbols 的计价货币要一致（钱包里只有一种现金），收到 {quotes}")
+    return syms
+
+
 def _bot(raw: Mapping, i: int) -> BotConfig:
     where = f"bots[{i}]"
-    for key in ("name", "symbol", "timeframe", "strategy", "budget"):
+    rotating = rotation.is_rotation(str(raw.get("strategy", "")))
+    for key in ("name", "symbols" if rotating else "symbol", "timeframe", "strategy", "budget"):
         if key not in raw:
             raise ValueError(f"{where} 缺少 {key}")
-    unknown = sorted(set(raw) - {"name", "symbol", "timeframe", "strategy", "budget", "params", "size", "risk", "slippage", "enabled"})
+    unknown = sorted(set(raw) - BOT_KEYS)
     if unknown:
         raise ValueError(f"{where} 有不认识的字段 {unknown}")
+    if rotating and "symbol" in raw:
+        raise ValueError(f"{where} 是轮动机器人，交易对都写进 symbols 列表，不要再写 symbol")
+    if not rotating and "symbols" in raw:
+        raise ValueError(f"{where}.symbols 只有轮动策略（{', '.join(sorted(rotation.ROTATIONS))}）才用，单币机器人写 symbol")
     name = str(raw["name"])
     if not re.fullmatch(r"[a-z0-9][a-z0-9_-]{0,31}", name):
         raise ValueError(f"{where}.name={name!r} 只能用小写字母、数字、- 和 _，最长 32 位")
-    symbol = str(raw["symbol"]).upper()
-    if "/" not in symbol:
-        raise ValueError(f"{where}.symbol={symbol!r} 要写成 BTC/USDT 这种格式")
     timeframe = str(raw["timeframe"])
-    timeframe_ms(timeframe)
-    strat = get_strategy(str(raw["strategy"]))
-    params = strat.resolve(raw.get("params"))
+    if rotating:
+        symbol, symbols = "", _symbols(raw["symbols"], where)
+        timeframe_ms(timeframe)
+        strategy = str(raw["strategy"])
+        params = rotation.resolve(strategy, raw.get("params"))
+    else:
+        symbol, symbols = str(raw["symbol"]).upper(), ()
+        if "/" not in symbol:
+            raise ValueError(f"{where}.symbol={symbol!r} 要写成 BTC/USDT 这种格式")
+        timeframe_ms(timeframe)
+        strat = get_strategy(str(raw["strategy"]))
+        strategy, params = strat.name, strat.resolve(raw.get("params"))
     budget = _num(raw, "budget", 0, where)
     if budget <= 0:
         raise ValueError(f"{where}.budget 必须大于 0")
@@ -94,6 +147,8 @@ def _bot(raw: Mapping, i: int) -> BotConfig:
     if bad:
         raise ValueError(f"{where}.risk 有不认识的字段 {bad}")
     risk = Risk(**{k: _num(risk_raw, k, 0.0, where + ".risk") for k in risk_raw})
+    if rotating and (risk.stop_loss or risk.take_profit or risk.trailing_stop):
+        raise ValueError(f"{where}.risk：轮动机器人目前只支持 kill_switch（止损/止盈/移动止损在换车之后不好定义，先不做）")
     slippage = raw.get("slippage")
     if slippage is not None:
         slippage = _num(raw, "slippage", 0.0, where)
@@ -101,13 +156,15 @@ def _bot(raw: Mapping, i: int) -> BotConfig:
         name=name,
         symbol=symbol,
         timeframe=timeframe,
-        strategy=strat.name,
+        strategy=strategy,
         budget=budget,
         params=params,
         size=size,
         risk=risk,
         slippage=slippage,
-        enabled=bool(raw.get("enabled", True)),
+        enabled=_flag(raw, "enabled", True, where),
+        symbols=symbols,
+        paper_only=_flag(raw, "paper_only", False, where),
     )
 
 
@@ -120,7 +177,7 @@ def load_config(path: str | Path | None = None, env: Mapping[str, str] | None = 
     ex = raw.get("exchange") or {}
     mode = (env.get("BOT_MODE") or ex.get("mode") or "paper").strip().lower()
     if mode not in MODES:
-        raise ValueError(f"mode 只能是 paper 或 live，收到 {mode!r}")
+        raise ValueError(f"mode 只能是 paper / live / testnet，收到 {mode!r}")
 
     bots = tuple(_bot(b, i) for i, b in enumerate(raw.get("bots") or []))
     names = [b.name for b in bots]

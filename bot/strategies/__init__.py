@@ -20,6 +20,7 @@ from __future__ import annotations
 import bisect
 import importlib
 import pkgutil
+import sys
 from dataclasses import dataclass, field
 from typing import Callable, Mapping
 
@@ -85,6 +86,7 @@ class Strategy:
 
 
 REGISTRY: dict[str, Strategy] = {}
+LOAD_ERRORS: dict[str, str] = {}  # 导入失败的策略文件：不让一个坏文件拖垮所有机器人，但 get() 会把原因带出来
 _loaded = False
 
 
@@ -112,8 +114,13 @@ def load_all() -> dict[str, Strategy]:
     global _loaded
     if not _loaded:
         for m in pkgutil.iter_modules(__path__):
-            if not m.name.startswith("_"):
+            if m.name.startswith("_"):
+                continue
+            try:
                 importlib.import_module(f"{__name__}.{m.name}")
+            except Exception as e:
+                LOAD_ERRORS[m.name] = f"{type(e).__name__}: {e}"
+                print(f"⚠️ 策略文件 {m.name}.py 导入失败，里面的策略暂时不可用：{LOAD_ERRORS[m.name]}", file=sys.stderr)
         _loaded = True
     return REGISTRY
 
@@ -123,7 +130,8 @@ def get(name: str) -> Strategy:
     try:
         return REGISTRY[name]
     except KeyError:
-        raise KeyError(f"没有叫 {name!r} 的策略，可选: {', '.join(sorted(REGISTRY))}") from None
+        broken = "".join(f"\n  {m}.py 导入失败：{err}" for m, err in LOAD_ERRORS.items())
+        raise KeyError(f"没有叫 {name!r} 的策略，可选: {', '.join(sorted(REGISTRY))}{broken}") from None
 
 
 def normalize(result) -> tuple[float, str]:
