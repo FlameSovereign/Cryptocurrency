@@ -554,8 +554,10 @@ def test_tick_timeout_then_next_run_recovers_without_double_buy(live_setup):
         tick(cfg.bots[0], cfg, ex=ex, broker=b, fear_greed=None)
     ex.reveal()
     rep = tick(cfg.bots[0], cfg, ex=ex, broker=b, fear_greed=None)
-    assert rep["fill"] is None and any("找回" in n for n in rep["notes"])
+    assert rep["recovered"] and rep["fill"]["side"] == "buy" and any("找回" in n for n in rep["notes"])
     assert len(ex.created) == 1  # 只下过一次单
+    trades = (cfg.state_dir("live") / "trades.csv").read_text()
+    assert "对账找回" in trades  # 找回的成交也写进成交记录
     st = _state(cfg)
     assert st["orders"] == [ex.created[0]["id"]] and st["wallet"]["qty"] == pytest.approx(100 / PX * 0.998)
     tick(cfg.bots[0], cfg, ex=ex, broker=b, fear_greed=None)
@@ -568,5 +570,24 @@ def test_tick_lost_state_push_is_recovered_from_exchange(live_setup):
     assert rep["fill"]["side"] == "buy"
     (cfg.state_dir("live") / "bots" / f"{BOT}.json").unlink()  # 存档没推上去：下次拿到的是旧状态
     rep = tick(cfg.bots[0], cfg, ex=ex, broker=b, fear_greed=None)
-    assert rep["fill"] is None and len(ex.created) == 1
+    assert rep["recovered"] and len(ex.created) == 1  # 找回了，没有重复下单
     assert _state(cfg)["wallet"]["qty"] == pytest.approx(100 / PX * 0.998)
+
+
+def test_recovered_stop_loss_sell_restores_cooldown(live_setup):
+    """止损卖单下成了但回复丢了：下次对账找回它时要恢复冷静期，不能原价追回去。"""
+    from bot.brokers import new_tag
+
+    cfg, ex, b = live_setup
+    w = Wallet.new(100)
+    w.apply(Fill("buy", PX, 0.001, 100.0))
+    ex.bal["BTC"][0] = 0.001
+    tag = new_tag(BOT, exit=True)
+    ex.script = [{"error": ccxt.RequestTimeout("timed out"), "hidden": True}]
+    with pytest.raises(RuntimeError, match="不确定"):
+        b.execute(OrderPlan("sell", amount=0.001), "BTC/USDT", PX, slippage=0, tag=tag)
+    ex.reveal()
+    fresh = Wallet.from_dict({**w.to_dict()})
+    got = []
+    b.sync(fresh, "BTC/USDT", PX, tag_prefix(BOT), [], now_ms() - 3_600_000, got)
+    assert fresh.exit_lock and not fresh.in_position and got and got[0][1].side == "sell"

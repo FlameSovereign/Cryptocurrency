@@ -95,9 +95,28 @@ def test_wallet_dust_counts_as_flat():
 def test_rebudget():
     w = Wallet.new(100)
     assert "追加" in w.rebudget(150) and w.cash == 150 and w.budget == 150
+    # 亏了 30% 的空仓机器人砍一半预算：按比例抽，收益率不变，不会被推上熔断线
+    w = Wallet.new(100)
+    w.cash = 70.0
+    w.rebudget(50, equity=70.0)
+    assert w.budget == 50 and w.cash == pytest.approx(35.0)
+    assert decide(_const_strategy(0.0), {}, [], w, 1.0, risk=Risk(kill_switch=0.5), ctx=CTX).event is None
+    # 现金不够抽：先抽一部分，预算同比例减，收益率依旧不变
+    w = Wallet.new(150)
     w.apply(Fill("buy", 10.0, 10.0, 120.0))
-    msg = w.rebudget(50)
-    assert w.cash == 0 and w.budget == pytest.approx(120) and "只够" in msg
+    before = w.equity(10.0) / w.budget
+    msg = w.rebudget(50, equity=w.equity(10.0))
+    assert w.cash == 0 and "只够" in msg and w.equity(10.0) / w.budget == pytest.approx(before)
+
+
+def test_sell_of_coins_never_held_adds_no_cash():
+    """重置后对账翻出旧卖单：账本里没有的币，不能凭空变出现金。"""
+    w = Wallet.new(100)
+    w.apply(Fill("sell", 50_000.0, 0.001, 49.9))
+    assert w.cash == pytest.approx(100) and w.qty == 0
+    w.apply(Fill("buy", 100.0, 0.5, 50.0))
+    w.apply(Fill("sell", 100.0, 1.0, 99.8))  # 卖单比账本多：只按账本里那 0.5 记钱
+    assert w.cash == pytest.approx(50 + 49.9) and w.qty == 0
 
 
 def test_wallet_roundtrip_dict():
@@ -293,3 +312,27 @@ def test_no_strategy_module_failed_to_import():
 
     load_all()
     assert not LOAD_ERRORS
+
+
+def test_stale_cache_older_than_gate_window_is_set_aside(tmp_path, monkeypatch):
+    """缓存停在 Gate 10000 根窗口之前：不能从断档处往后补（交易所会拒绝），旧缓存挪开、从窗口内重新下。"""
+    from bot import data
+    from bot.candles import now_ms
+
+    from .helpers import FakeExchange
+
+    monkeypatch.setattr(data, "CACHE_DIR", tmp_path)
+    h = 3_600_000
+    now = now_ms() // h * h
+    fresh = make_candles([100.0] * 50, "1h", t0=now - 50 * h)
+    old = make_candles([90.0] * 10, "1h", t0=now - 12_000 * h)
+    data.write_cache("gate", "BTC/USDT", "1h", old)
+
+    class Ex(FakeExchange):
+        def fetch_ohlcv(self, symbol, timeframe, since=None, limit=1000):
+            assert since is None or since >= now - 10_000 * h, "请求了 Gate 不给的老数据"
+            return super().fetch_ohlcv(symbol, timeframe, since, limit)
+
+    got = data.fetch_history(Ex(fresh), "BTC/USDT", "1h", now - 30 * h)
+    assert got and got[0].ts >= now - 30 * h
+    assert list((tmp_path / "ohlcv" / "gate").glob("BTC_USDT-1h.stale-*.csv"))

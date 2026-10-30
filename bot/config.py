@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_PATH = ROOT / "config.toml"
 MODES = ("paper", "live", "testnet")
 BOT_KEYS = {"name", "symbol", "symbols", "timeframe", "strategy", "budget", "params", "size", "risk", "slippage", "enabled",
-            "paper_only"}
+            "paper_only", "reset"}
 
 
 @dataclass(frozen=True)
@@ -34,6 +34,7 @@ class BotConfig:
     enabled: bool = True
     symbols: tuple[str, ...] = ()  # 轮动机器人的篮子（单币机器人为空）
     paper_only: bool = False  # 只在模拟盘跑（对照组用）：切到实盘/测试网时自动跳过，永远不碰真钱
+    reset: str | None = None  # 改成一个新值 = 下次运行清空账本重新开始（熔断后复活也用它）
 
     @property
     def is_rotation(self) -> bool:
@@ -79,6 +80,15 @@ def _num(d: Mapping, key: str, default: float, where: str) -> float:
     if isinstance(v, bool) or not isinstance(v, (int, float)):
         raise ValueError(f"{where}.{key} 应该是数字，收到 {v!r}")
     return float(v)
+
+
+def _reset(d: Mapping, where: str) -> str | None:
+    v = d.get("reset")
+    if v is None:
+        return None
+    if isinstance(v, bool) or not isinstance(v, (str, int)) or not str(v).strip():
+        raise ValueError(f'{where}.reset 写一个字符串，比如 reset = "2026-11-01"（每次想重置就换个新值）')
+    return str(v).strip()
 
 
 def _flag(d: Mapping, key: str, default: bool, where: str) -> bool:
@@ -165,6 +175,7 @@ def _bot(raw: Mapping, i: int) -> BotConfig:
         enabled=_flag(raw, "enabled", True, where),
         symbols=symbols,
         paper_only=_flag(raw, "paper_only", False, where),
+        reset=_reset(raw, where),
     )
 
 

@@ -128,6 +128,12 @@ def fetch_history(
     tf = timeframe_ms(timeframe)
 
     cached = read_cache(exchange_id, symbol, timeframe) if use_cache else []
+    if cached and not offline and cached[-1].ts + tf < history_floor_ms(exchange_id, timeframe, now):
+        # 缓存太久没更新，断档的那段交易所已经不给查了：旧缓存挪到一边，从交易所允许的最早处重新下
+        # （不能硬接：回测按位置走 K 线，中间缺一段会被悄悄连起来）
+        old = _cache_path(exchange_id, symbol, timeframe)
+        os.replace(old, old.with_suffix(f".stale-{cached[-1].ts}.csv"))
+        cached = []
     if offline:
         if not cached:
             raise FileNotFoundError(f"离线模式下没有 {exchange_id} {symbol} {timeframe} 的缓存")

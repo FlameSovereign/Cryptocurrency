@@ -441,7 +441,10 @@ class OrphanBroker:
     def __init__(self, symbol, base, quote):
         self.symbol, self.base, self.quote, self.calls = symbol, base, quote, []
 
-    def sync(self, wallet, symbol, price, prefix, known, since_ms):
+    def min_cost(self, symbol, price):
+        return 3.0
+
+    def sync(self, wallet, symbol, price, prefix, known, since_ms, recovered=None):
         self.calls.append((symbol, wallet.holding, wallet.qty))
         if symbol == self.symbol and "o-1" not in known:
             known.append("o-1")
@@ -536,3 +539,96 @@ def test_paper_broker_respects_max_order():
     ex = FakeExchange(make_candles([100.0] * 3))
     fill = PaperBroker(ex, fee=0.0, max_order=50).execute(OrderPlan("buy", cost=100), "BTC/USDT", 100.0, slippage=0, tag="t")
     assert fill.quote == pytest.approx(50)
+
+
+# ---------------- 复盘修过的坑 ----------------
+
+RESET_CONFIG = CONFIG.replace('budget = 100\n', 'budget = 100\nreset = "r1"\n')
+
+
+def test_reset_key_restarts_ledger_but_keeps_claimed_orders(tmp_path):
+    path = tmp_path / "config.toml"
+    path.write_text(CONFIG)
+    cfg = load_config(path, env={"KURUMI_STATE_DIR": str(tmp_path / "state")})
+    t0 = (now_ms() // H - 60) * H
+    ex = FakeExchange(make_candles([100.0 + i for i in range(60)], "1h", t0=t0))
+    broker = PaperBroker(ex, fee=0.002)
+    tick(cfg.bots[0], cfg, ex=ex, broker=broker, fear_greed=None)
+    p = cfg.state_dir("paper") / "bots" / "t-hodl.json"
+    st = json.loads(p.read_text())
+    st["wallet"]["halted"] = True
+    p.write_text(json.dumps(st))
+    path.write_text(RESET_CONFIG)
+    cfg = load_config(path, env={"KURUMI_STATE_DIR": str(tmp_path / "state")})
+    rep = tick(cfg.bots[0], cfg, ex=ex, broker=broker, fear_greed=None)
+    assert any("重置" in n for n in rep["notes"]) and rep["fill"]["side"] == "buy"  # 复活后重新上车
+    st2 = json.loads(p.read_text())
+    assert st2["reset"] == "r1" and st2["orders"][0] == st["orders"][0] and len(st2["orders"]) == 2
+    assert not st2["wallet"]["halted"] and st2["epoch_ms"] >= st["created_ms"]
+    rep = tick(cfg.bots[0], cfg, ex=ex, broker=broker, fear_greed=None)
+    assert not any("重置" in n for n in rep["notes"])  # 同一个 reset 值只生效一次
+
+
+def test_reset_refused_in_live_while_holding():
+    from bot.config import BotConfig
+    from bot.run import apply_reset
+
+    bot = BotConfig(name="b", symbol="BTC/USDT", timeframe="1h", strategy="hodl", budget=100, reset="r2")
+    w = Wallet.new(100)
+    w.apply(Fill("buy", 100.0, 1.0, 100.0))
+    with pytest.raises(RuntimeError, match="仓位"):
+        apply_reset(bot, {}, w, "live")
+    w2, msg = apply_reset(bot, {}, w, "paper")
+    assert w2.qty == 0 and w2.cash == 100 and "重置" in msg
+
+
+def test_recover_window_respects_ledger_epoch():
+    from bot.run import NEW_LEDGER_GRACE_MS, recover_since
+
+    now = now_ms()
+    assert recover_since({"created_ms": now}) == pytest.approx(now - NEW_LEDGER_GRACE_MS, abs=5_000)  # 新账本：宽限 6 小时
+    assert recover_since({"created_ms": now - 30 * 86_400_000}) == pytest.approx(now - 3 * 86_400_000, abs=5_000)
+    assert recover_since({"created_ms": 0, "epoch_ms": now - 60_000}) == now - 60_000  # 重置过：只认重置之后的单
+
+
+def test_symbol_change_judged_by_position_not_new_price(tmp_path):
+    path = tmp_path / "config.toml"
+    path.write_text(CONFIG)
+    cfg = load_config(path, env={"KURUMI_STATE_DIR": str(tmp_path / "state")})
+    t0 = (now_ms() // H - 60) * H
+    ex = FakeExchange(make_candles([100.0] * 60, "1h", t0=t0))
+    broker = PaperBroker(ex, fee=0.002)
+    tick(cfg.bots[0], cfg, ex=ex, broker=broker, fear_greed=None)
+    p = cfg.state_dir("paper") / "bots" / "t-hodl.json"
+    st = json.loads(p.read_text())
+    st["symbol"] = "XYZ/USDT"  # 假装原来交易的是别的币，而且手里有仓位
+    p.write_text(json.dumps(st))
+    with pytest.raises(RuntimeError, match="换了交易对"):
+        tick(cfg.bots[0], cfg, ex=ex, broker=broker, fear_greed=None)
+    # 旧币只剩卖不掉的零头（已经算空仓）：允许换，零头不再算这个机器人的
+    st["wallet"].update(entry_price=None, high_water=None, entry_equity=None, qty=1e-7)
+    p.write_text(json.dumps(st))
+    rep = tick(cfg.bots[0], cfg, ex=ex, broker=broker, fear_greed=None)
+    assert rep["status"] == "ok"
+
+
+class BadSymbol(Exception):
+    pass
+
+
+def test_sync_rotation_skips_unlisted_symbol_and_tolerates_sub_minimum_dust():
+    from bot.run import sync_rotation
+
+    class Broker(OrphanBroker):
+        def sync(self, wallet, symbol, price, prefix, known, since_ms, recovered=None):
+            if symbol == "WIFX/USDT":
+                raise BadSymbol("gate does not have market symbol WIFX/USDT")
+            return super().sync(wallet, symbol, price, prefix, known, since_ms, recovered)
+
+    prices = {"ETH/USDT": 2000.0, "SOL/USDT": 50.0, "WIFX/USDT": 1.0}
+    w = Wallet.new(100)
+    w.holding = "ETH/USDT"
+    w.apply(Fill("buy", 2000.0, 0.05, 100.0))
+    w.apply(Fill("sell", 2000.0, 0.04994, 99.6), flat_below=3.0)  # 卖完剩 0.00006 ETH ≈ 0.12 USDT：比 dust_value 大、比最小下单小
+    notes = sync_rotation(Broker("SOL/USDT", base=1.99, quote=99.5), w, list(prices), prices.get, "t-ks-x", [], 0)
+    assert w.holding == "SOL/USDT" and any("WIFX" in n for n in notes)

@@ -61,7 +61,7 @@ def decide(
     ctx: Context,
 ) -> Decision:
     if wallet.halted:
-        return Decision(0.0, None, "halted", "已熔断，罢工中（删掉 state 里这个机器人的文件可复活）")
+        return Decision(0.0, None, "halted", '已熔断，罢工中（config 里给这个机器人加一行 reset = "随便一个新值" 可复活）')
 
     equity = wallet.equity(price)
     if risk.kill_switch > 0 and equity <= wallet.budget * (1 - risk.kill_switch):

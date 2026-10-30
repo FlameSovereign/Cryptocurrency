@@ -24,7 +24,7 @@ from .brokers import LiveBroker, PaperBroker, SkipOrder, new_tag, tag_prefix
 from .candles import now_ms, timeframe_ms
 from .config import ROOT, BotConfig, Config, load_config
 from .data import fetch_fear_greed, fetch_recent, make_exchange
-from .engine import apply_events, decide, plan_order, simulate_fill
+from .engine import EXIT_EVENTS, apply_events, decide, plan_order, simulate_fill
 from .state import append_csv, load_bot, save_bot
 from .strategies import Context, get as get_strategy
 from .wallet import Wallet
@@ -32,6 +32,7 @@ from .wallet import Wallet
 TRADE_HEADER = ["time", "bot", "symbol", "side", "price", "base", "quote", "fee_quote", "event", "reason", "order_id", "equity", "note"]
 EQUITY_HEADER = ["time", "bot", "symbol", "price", "equity", "exposure", "signal", "target", "event"]
 RECOVER_WINDOW_MS = 3 * 86_400_000
+NEW_LEDGER_GRACE_MS = 6 * 3_600_000  # 新账本也认领它出生前 6 小时内的单（第一次运行的存档没推上去也能找回）
 MODE_NAMES = {"paper": "模拟盘", "live": "实盘", "testnet": "测试网"}
 HOSTED_LIVE_REFUSAL = """\
 ⛔ 实盘 / 测试网不在 GitHub 托管的机器上跑，这次什么都没做。原因：
@@ -39,6 +40,37 @@ HOSTED_LIVE_REFUSAL = """\
 - Gate 用户协议把美国列为受限地区，从这些 IP 调用你的账户有被风控（冻结）的风险
 做法：仓库改成私有，在你自己的电脑/服务器上装 self-hosted runner，再把仓库变量 RUNNER 设成 self-hosted。
 只想看效果就把 BOT_MODE 改回 paper（模拟盘在哪跑都行）。"""
+
+
+def ledger_epoch(st: dict) -> int:
+    """这本账从什么时候开始负责订单：重置的账本从重置那一刻起；新账本往前宽限几小时。更早的单不是它的。"""
+    return int(st.get("epoch_ms") or st.get("created_ms", 0) - NEW_LEDGER_GRACE_MS)
+
+
+def recover_since(st: dict) -> int:
+    return max(now_ms() - RECOVER_WINDOW_MS, ledger_epoch(st))
+
+
+def apply_reset(bot: BotConfig, st: dict, wallet: Wallet, mode: str) -> tuple[Wallet, str | None]:
+    """config 里的 reset 换了新值：清空账本重新开始，但保留已认领的订单号，并且只认领重置之后的单。"""
+    if bot.reset is None or st.get("reset") == bot.reset:
+        return wallet, None
+    if mode != "paper" and wallet.in_position:
+        raise RuntimeError(f"{bot.name} 要按 reset = {bot.reset!r} 重置账本，但手里还有仓位：先卖掉（或等它自己卖掉）再重置")
+    st["reset"], st["epoch_ms"] = bot.reset, now_ms()
+    return Wallet.new(bot.budget), f"按 reset = {bot.reset!r} 重置了账本，从 {bot.budget:.2f} 重新开始"
+
+
+def log_trade(state_dir, bot_name: str, symbol: str, fill, *, event: str = "", reason: str = "", equity: float) -> None:
+    append_csv(state_dir / "trades.csv", TRADE_HEADER, {
+        "time": _iso(fill.ts or now_ms()), "bot": bot_name, "symbol": symbol, "side": fill.side,
+        "price": f"{fill.price:.10g}", "base": f"{fill.base:.10g}", "quote": f"{fill.quote:.10g}",
+        "fee_quote": f"{fill.fee_quote:.6g}", "event": event, "reason": reason,
+        "order_id": fill.order_id or "", "equity": f"{equity:.4f}", "note": fill.note})
+
+
+def _fill_dict(symbol: str, f) -> dict:
+    return {"symbol": symbol, "side": f.side, "price": f.price, "base": f.base, "quote": f.quote, "note": f.note}
 
 
 def _cell(x) -> str:
@@ -75,12 +107,21 @@ def tick(bot: BotConfig, cfg: Config, *, ex, broker, fear_greed, dry_run: bool =
 
     state_dir = cfg.state_dir(broker.mode)
     st = load_bot(state_dir, bot.name, bot.budget)
-    wallet = Wallet.from_dict(st["wallet"])
-    if st.get("symbol") and st["symbol"] != bot.symbol and wallet.qty * price >= wallet.dust_value():
-        raise RuntimeError(f"{bot.name} 换了交易对（{st['symbol']} → {bot.symbol}）但旧仓位还没清，先清仓或者给机器人改个名字")
-    if msg := wallet.rebudget(bot.budget):
+    wallet, msg = apply_reset(bot, st, Wallet.from_dict(st["wallet"]), broker.mode)
+    if msg:
         rep["notes"].append(msg)
-    rep["notes"] += broker.sync(wallet, bot.symbol, price, tag_prefix(bot.name), st["orders"], now_ms() - RECOVER_WINDOW_MS)
+    if st.get("symbol") and st["symbol"] != bot.symbol:
+        if wallet.in_position:
+            raise RuntimeError(f"{bot.name} 换了交易对（{st['symbol']} → {bot.symbol}）但旧仓位还没清，先清仓或者给机器人改个名字")
+        wallet.qty = 0.0  # 旧币卖剩的零头留在账户里，不再算这个机器人的
+    if msg := wallet.rebudget(bot.budget, wallet.equity(price)):
+        rep["notes"].append(msg)
+    recovered: list = []
+    rep["notes"] += broker.sync(wallet, bot.symbol, price, tag_prefix(bot.name), st["orders"], recover_since(st), recovered)
+    if recovered and not dry_run:
+        for sym, f in recovered:
+            log_trade(state_dir, bot.name, sym, f, reason="对账找回", equity=wallet.equity(price))
+    rep["recovered"] = [_fill_dict(sym, f) for sym, f in recovered]
     min_cost = broker.min_cost(bot.symbol, price)
     if wallet.settle_dust(price, min_cost):
         rep["notes"].append(f"手里只剩 {wallet.qty:.8g}（低于最小下单额，卖不掉），当作空仓")
@@ -99,8 +140,11 @@ def tick(bot: BotConfig, cfg: Config, *, ex, broker, fear_greed, dry_run: bool =
 
     fill = None
     if plan and not dry_run:
+        if d.event:
+            persist()  # 止损/熔断这类决定先落盘：万一下单结果不确定，冷静期和熔断状态也不会丢
         try:
-            fill = broker.execute(plan, bot.symbol, price, slippage=slippage, tag=new_tag(bot.name))
+            fill = broker.execute(plan, bot.symbol, price, slippage=slippage,
+                                  tag=new_tag(bot.name, exit=d.event in EXIT_EVENTS))
         except SkipOrder as e:
             rep["notes"].append(str(e))
         if fill:
@@ -108,11 +152,7 @@ def tick(bot: BotConfig, cfg: Config, *, ex, broker, fear_greed, dry_run: bool =
             if fill.order_id:
                 st["orders"].append(fill.order_id)
             persist()  # 成交后第一时间存盘，后面就算崩了下次也能对上账
-            append_csv(state_dir / "trades.csv", TRADE_HEADER, {
-                "time": _iso(fill.ts or now_ms()), "bot": bot.name, "symbol": bot.symbol, "side": fill.side,
-                "price": f"{fill.price:.10g}", "base": f"{fill.base:.10g}", "quote": f"{fill.quote:.10g}",
-                "fee_quote": f"{fill.fee_quote:.6g}", "event": d.event or "", "reason": d.reason,
-                "order_id": fill.order_id or "", "equity": f"{wallet.equity(price):.4f}", "note": fill.note})
+            log_trade(state_dir, bot.name, bot.symbol, fill, event=d.event or "", reason=d.reason, equity=wallet.equity(price))
             if fill.note:
                 rep["notes"].append(fill.note)
 
@@ -122,7 +162,7 @@ def tick(bot: BotConfig, cfg: Config, *, ex, broker, fear_greed, dry_run: bool =
         exposure_before=exposure_before, exposure=wallet.exposure(price), equity=equity,
         pnl=equity / wallet.budget - 1 if wallet.budget else 0.0, budget=wallet.budget,
         plan=None if plan is None else {"side": plan.side, "cost": plan.cost, "amount": plan.amount},
-        fill=None if fill is None else {"side": fill.side, "price": fill.price, "base": fill.base, "quote": fill.quote},
+        fill=_fill_dict(bot.symbol, fill) if fill else (rep["recovered"][-1] if rep["recovered"] else None),
         candle_close=_iso(candles[-1].ts + tf), halted=wallet.halted, exit_lock=wallet.exit_lock,
     )
     if dry_run:
@@ -138,7 +178,8 @@ def tick(bot: BotConfig, cfg: Config, *, ex, broker, fear_greed, dry_run: bool =
     return rep
 
 
-def sync_rotation(broker, wallet: Wallet, symbols, price_of, prefix: str, known: list, since_ms: int) -> list[str]:
+def sync_rotation(broker, wallet: Wallet, symbols, price_of, prefix: str, known: list, since_ms: int,
+                  recovered: list | None = None) -> list[str]:
     """轮动机器人开跑前对账：篮子里每个币都对一遍，先对手里那个（漏记的卖单先补上）。
 
     broker.sync 只认“qty 就是这个币的数量”的单币钱包，所以没拿着的币用一个 qty=0 的影子钱包去对：
@@ -150,16 +191,25 @@ def sync_rotation(broker, wallet: Wallet, symbols, price_of, prefix: str, known:
     for sym in ([held] if held else []) + [s for s in symbols if s != held]:
         px = price_of(sym)
         if sym == wallet.holding:
-            notes += broker.sync(wallet, sym, px or 0.0, prefix, known, since_ms)
+            notes += broker.sync(wallet, sym, px or 0.0, prefix, known, since_ms, recovered)
             continue
         shadow = Wallet.from_dict({**wallet.to_dict(), "qty": 0.0, "holding": sym, "entry_price": None,
                                    "high_water": None, "entry_equity": None})
-        notes += broker.sync(shadow, sym, px or 0.0, prefix, known, since_ms)
+        try:
+            notes += broker.sync(shadow, sym, px or 0.0, prefix, known, since_ms, recovered)
+        except Exception as e:
+            if type(e).__name__ != "BadSymbol":
+                raise
+            notes.append(f"交易所里没有 {sym}（写错了或者下架了？），跳过对账")  # 没拿着、交易所也没有：没什么可找回的
+            continue
         if shadow.fills == wallet.fills:
             continue
         wallet.cash, wallet.fees_paid, wallet.realized_pnl, wallet.fills = shadow.cash, shadow.fees_paid, shadow.realized_pnl, shadow.fills
         if shadow.qty * (px or shadow.entry_price or 0.0) >= wallet.dust_value():
-            if wallet.holding is not None and wallet.qty * (price_of(wallet.holding) or 0.0) >= wallet.dust_value():
+            hpx = price_of(wallet.holding) or 0.0 if wallet.holding else 0.0
+            # 手里那个币只剩卖不掉的零头（低于最小下单额，换车时本来就会记作损耗）就不算冲突
+            floor = max(wallet.dust_value(), broker.min_cost(wallet.holding, hpx) if wallet.holding and hpx else 0.0)
+            if wallet.holding is not None and wallet.qty * hpx >= floor:
                 raise RuntimeError(f"账本对不上：记着拿 {wallet.holding}，又找回了 {sym} 的买单。请对照交易所订单人工修 state")
             wallet.qty, wallet.holding = shadow.qty, sym
             wallet.entry_price, wallet.high_water, wallet.entry_equity = shadow.entry_price, shadow.high_water, shadow.entry_equity
@@ -225,11 +275,20 @@ def rotation_tick(bot: BotConfig, cfg: Config, *, ex, broker, dry_run: bool = Fa
     if held and live_price(held) is None:
         rep.update(status="skip", reason=f"手里的 {held} 拿不到价格，这次不动")
         return rep
-    before = (wallet.to_dict(), list(st["orders"]))
-    if msg := wallet.rebudget(bot.budget):
+    wallet, msg = apply_reset(bot, st, wallet, broker.mode)
+    if msg:
         rep["notes"].append(msg)
+        held = wallet.holding
+    before = (wallet.to_dict(), list(st["orders"]))
+    if msg := wallet.rebudget(bot.budget, wallet.cash + (wallet.qty * prices[held] if held and held in prices else 0.0)):
+        rep["notes"].append(msg)
+    recovered: list = []
     rep["notes"] += sync_rotation(broker, wallet, universe, lambda s: prices.get(s) or live_price(s),
-                                  tag_prefix(bot.name), st["orders"], now_ms() - RECOVER_WINDOW_MS)
+                                  tag_prefix(bot.name), st["orders"], recover_since(st), recovered)
+    if recovered and not dry_run:
+        for sym, f in recovered:
+            log_trade(state_dir, bot.name, sym, f, reason="对账找回", equity=wallet.cash + wallet.qty * (prices.get(wallet.holding) or f.price))
+    rep["recovered"] = [_fill_dict(sym, f) for sym, f in recovered]
     if wallet.holding != held:  # 对账时找回了漏记的买单
         held = wallet.holding
         if held and live_price(held) is None:
@@ -448,8 +507,8 @@ def main(argv: list[str] | None = None) -> int:
         with open(summary, "a") as f:
             f.write(text)
 
-    noteworthy = [r for r in reports if r.get("fill") or r.get("event") in ("stop_loss", "take_profit", "trailing_stop", "kill_switch")
-                  or r["status"] == "error"]
+    noteworthy = [r for r in reports if r.get("fill") or r.get("recovered")
+                  or r.get("event") in ("stop_loss", "take_profit", "trailing_stop", "kill_switch") or r["status"] == "error"]
     if noteworthy and not args.dry_run:
         for line in notify.send("梭哈机器人有动静", text, cfg.notify):
             print(line)

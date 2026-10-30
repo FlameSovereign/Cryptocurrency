@@ -180,7 +180,7 @@ def decide(rot: Strategy, params: dict, windows: Mapping[str, Sequence[Candle]],
            *, risk: Risk = Risk(), ctx: Context) -> RotationDecision:
     """风控 + 轮动信号 -> 该拿哪个币。不碰钱包。price = 手里那个币的最新价（空仓时不用）。"""
     if wallet.halted:
-        return RotationDecision(None, "halted", "已熔断，罢工中（删掉 state 里这个机器人的文件可复活）")
+        return RotationDecision(None, "halted", '已熔断，罢工中（config 里给这个机器人加一行 reset = "随便一个新值" 可复活）')
     if wallet.holding is not None and price is None:
         raise ValueError(f"手里拿着 {wallet.holding} 却没有它的价格")
     equity = wallet.cash + (wallet.qty * price if wallet.holding is not None else 0.0)

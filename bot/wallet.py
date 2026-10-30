@@ -80,10 +80,12 @@ class Wallet:
             self.cash -= fill.quote
         elif fill.side == "sell":
             sold = min(fill.base, self.qty)
+            # 只给账本里真有的那部分记钱：账本没有的币（比如重置后对账翻出的旧卖单）不能凭空变出现金
+            got = fill.quote * (sold / fill.base) if fill.base > 0 else 0.0
             if self.entry_price is not None:
-                self.realized_pnl += fill.quote - self.entry_price * sold
+                self.realized_pnl += got - self.entry_price * sold
             self.qty -= sold
-            self.cash += fill.quote
+            self.cash += got
             if self.qty * fill.price < max(self.dust_value(), flat_below):
                 if self.entry_equity is not None:
                     closed_pnl = self.equity(fill.price) - self.entry_equity
@@ -106,21 +108,33 @@ class Wallet:
             return True
         return False
 
-    def rebudget(self, new_budget: float) -> str | None:
-        """配置里改了预算：加预算就补现金，减预算就从现金里扣（扣不够就能扣多少扣多少）。"""
-        delta = float(new_budget) - self.budget
+    def rebudget(self, new_budget: float, equity: float | None = None) -> str | None:
+        """配置里改了预算。
+
+        加预算：补现金。减预算：按比例从净值里抽走——预算砍一半就抽走一半净值，收益率和离熔断线的距离都不变
+        （不然一个亏了 30% 的机器人砍一半预算，会直接撞上熔断线）。现金不够抽就先抽一部分，卖出后下次再抽。
+        equity 是当前净值，不传就当只有现金。
+        """
+        new_budget = float(new_budget)
+        delta = new_budget - self.budget
         if abs(delta) < 1e-9:
             return None
         if delta > 0:
             self.cash += delta
             self.budget += delta
             return f"追加预算 {delta:.2f}"
-        take = min(-delta, self.cash)
+        eq = self.cash if equity is None else float(equity)
+        if eq <= 0 or self.budget <= 0:
+            self.budget = new_budget
+            return f"预算改成 {new_budget:.2f}"
+        want = eq * (-delta / self.budget)
+        take = min(want, self.cash)
         self.cash -= take
-        self.budget -= take
-        if take < -delta - 1e-9:
-            return f"想减预算 {-delta:.2f}，但现金只够扣 {take:.2f}（剩下的在币里，卖出后再改）"
-        return f"减少预算 {take:.2f}"
+        if take >= want - 1e-9:
+            self.budget = new_budget
+            return f"预算减到 {new_budget:.2f}（按比例抽走 {take:.2f}）"
+        self.budget -= take / eq * self.budget
+        return f"想把预算减到 {new_budget:.2f}，现金只够按比例抽走 {take:.2f}（剩下的在币里，卖出后再抽）"
 
     # ---- 序列化 ----
     def to_dict(self) -> dict:

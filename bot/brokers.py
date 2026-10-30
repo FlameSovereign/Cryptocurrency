@@ -53,8 +53,11 @@ def tag_prefix(bot_name: str) -> str:
     return "t-ks-" + hashlib.sha1(bot_name.encode()).hexdigest()[:6]
 
 
-def new_tag(bot_name: str, at_ms: int | None = None) -> str:
-    return f"{tag_prefix(bot_name)}-{_base36(at_ms or now_ms())}"
+EXIT_SUFFIX = "-x"  # 止损 / 止盈 / 移动止损卖出的单：对账找回时要恢复冷静期
+
+
+def new_tag(bot_name: str, at_ms: int | None = None, *, exit: bool = False) -> str:
+    return f"{tag_prefix(bot_name)}-{_base36(at_ms or now_ms())}" + (EXIT_SUFFIX if exit else "")
 
 
 def _base36(n: int) -> str:
@@ -223,7 +226,8 @@ class PaperBroker:
     def min_cost(self, symbol: str, price: float) -> float:
         return market_min_cost(self.market(symbol), price)
 
-    def sync(self, wallet: Wallet, symbol: str, price: float, prefix: str, known: list, since_ms: int) -> list[str]:
+    def sync(self, wallet: Wallet, symbol: str, price: float, prefix: str, known: list, since_ms: int,
+             recovered: list | None = None) -> list[str]:
         return []
 
     def execute(self, plan: OrderPlan, symbol: str, price: float, *, slippage: float, tag: str) -> Fill:
@@ -306,9 +310,11 @@ class LiveBroker:
                 break
         return list(out.values())
 
-    def sync(self, wallet: Wallet, symbol: str, price: float, prefix: str, known: list, since_ms: int) -> list[str]:
+    def sync(self, wallet: Wallet, symbol: str, price: float, prefix: str, known: list, since_ms: int,
+             recovered: list | None = None) -> list[str]:
         """开跑前对账：
         1. 找回“单下了但账本没记上”的订单（上次超时 / 崩了 / 存档没推上去），按订单备注认领，订单号记进 known；
+           找回的成交以 (symbol, Fill) 追加进 recovered，好写进成交记录；找回的止损卖单（备注带 -x）会恢复冷静期；
         2. 账本里的币比账户里的还多（被手动卖了 / 转走了），以账户为准。
         历史订单查不了就直接报错、这次不交易：不知道上次的单成没成，宁可不动，也不重复下单、不乱改账本。
         """
@@ -329,7 +335,14 @@ class LiveBroker:
             seen.add(oid)
             if fill.base <= 0:
                 continue
-            wallet.apply(fill)
+            wallet.apply(fill, flat_below=market_min_cost(m, fill.price))
+            if fill.side == "sell" and order_tag(o).endswith(EXIT_SUFFIX):
+                wallet.exit_lock = True  # 那一单是止损/止盈卖的：冷静期接着算
+            elif fill.side == "buy":
+                wallet.exit_lock = False  # 能买说明当时已经解锁了
+            fill.note = "；".join(x for x in ("对账找回", fill.note) if x)
+            if recovered is not None:
+                recovered.append((symbol, fill))
             notes.append(f"找回漏记的订单 {oid}：{fill.side} {fill.base:.8g} {m['base']} @ {fill.price:.8g}")
 
         _, base_total, quote_free = self.holdings(symbol)
