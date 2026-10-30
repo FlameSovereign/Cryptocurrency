@@ -66,11 +66,21 @@ def test_fear_greed_rejects_crossed_thresholds():
 def test_missing_index_keeps_position(name):
     c = make_candles(wave(400, period=60, drift=0.002), "1d")
     for pos in (0.0, 0.37, 1.0):
-        v, note = call(name, c, pos, None)  # 没接数据源
-        assert v == pytest.approx(pos) and "原样不动" in note
         late = fg_series([10] * 30, t0=c[-1].ts + 30 * DAY)  # 数据从未来才开始 = 这个时点还没数据
-        v, note = call(name, c, pos, late)
-        assert v == pytest.approx(pos) and "原样不动" in note
+        for fg in (None, late):  # None = 没接数据源
+            v, note = call(name, c, pos, fg)
+            if v != pytest.approx(pos):
+                # 只有一种例外：fear_greed_trend 持仓时跌破均线是价格信号，指数缺了也照样跑
+                assert name == "fear_greed_trend" and pos == 1.0 and v == 0.0 and "跌破" in note
+            else:
+                assert "原样不动" in note
+
+
+def test_fear_greed_trend_exits_on_trend_break_without_index():
+    rows = [100.0] * 200 + [80.0] * 5  # 横盘后急跌：收盘在 EMA 下方
+    c = make_candles(rows, "1d")
+    v, note = call("fear_greed_trend", c[-get("fear_greed_trend").lookback(get("fear_greed_trend").resolve({})):], 1.0, None)
+    assert v == 0.0 and "跌破" in note
 
 
 # ---------------- 恐慌见底再上车 ----------------

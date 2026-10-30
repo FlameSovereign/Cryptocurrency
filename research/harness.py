@@ -68,10 +68,30 @@ def fear_greed() -> FearGreed:
     return _cache["fng"]
 
 
+def data_start_ms(strategy: str) -> int:
+    """策略能开始交易的最早时间：需要恐惧贪婪指数的，等指数有数据（2018-02）之后。"""
+    if "fear_greed" in get(strategy).needs:
+        return fear_greed().first_ms + 86_400_000
+    return 0
+
+
+def first_decision_ms(strategy: str, symbol: str, timeframe: str, params=None) -> int | None:
+    """这个策略在这个标的上第一次做决策的那根 K 线（猴子、囤币要从这里一起起跑才公平）。"""
+    s = get(strategy)
+    c = candles(symbol, timeframe)
+    look = s.lookback(s.resolve(params))
+    if len(c) <= look:
+        return None
+    t = data_start_ms(strategy)
+    return next((x.ts for x in c[look - 1 :] if x.ts >= t), None)
+
+
 def backtest(strategy: str, symbol: str, timeframe: str, *, params=None, risk: Risk = Risk(), size: float = 1.0,
              fee: float = FEE, start_ms: int | None = None, end_ms: int | None = None) -> Result:
     strat = get(strategy)
     c = candles(symbol, timeframe)
+    if strat.needs:
+        start_ms = max(start_ms or 0, data_start_ms(strategy))
     if end_ms is not None:
         c = [x for x in c if x.ts < end_ms]
     return run_backtest(strat, c, timeframe=timeframe, symbol=symbol, params=params, budget=BUDGET, size=size,

@@ -265,3 +265,31 @@ def test_all_registered_strategies_are_sane():
             assert a == b and 0.0 <= a[0] <= 1.0, name
         r = run_backtest(s, c, timeframe="4h", fear_greed=fg, min_cost=1)
         assert math.isfinite(r.total_return), name
+
+
+def test_fear_greed_staleness_and_range():
+    day = 86_400_000
+    fg = FearGreed({T0: 10, T0 + day: 20})
+    assert fg.first_ms == T0 and fg.last_ms == T0 + day
+    assert fg.at(T0 + 5 * day) == 20  # 4 天前的值还能用
+    assert fg.at(T0 + 5 * day + 1) is None  # 断更超过 4 天：当作没数据
+
+
+def test_dust_below_min_cost_counts_as_flat():
+    """卖完剩的零头低于交易所最小下单额：卖不掉，当空仓，不能再触发止损、卡冷静期。"""
+    w = Wallet.new(100)
+    w.apply(Fill("buy", 2000.0, 0.05, 100.0))
+    w.apply(Fill("sell", 2000.0, 0.0499, 99.8), flat_below=3.0)  # 剩 0.0001 ≈ 0.2 USDT
+    assert not w.in_position and w.qty == pytest.approx(0.0001)
+    w2 = Wallet.new(100)
+    w2.apply(Fill("buy", 2000.0, 0.05, 100.0))
+    w2.qty = 0.0012  # 比如账户里被手动卖得只剩 2.4 USDT
+    assert w2.settle_dust(2000.0, flat_below=3.0) and not w2.in_position
+    assert decide(_const_strategy(1.0), {}, [], w2, 1000.0, risk=Risk(stop_loss=0.1), ctx=CTX).event is None
+
+
+def test_no_strategy_module_failed_to_import():
+    from bot.strategies import LOAD_ERRORS
+
+    load_all()
+    assert not LOAD_ERRORS

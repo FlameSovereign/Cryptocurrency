@@ -160,6 +160,15 @@ def test_wiggling_around_a_grid_line_does_not_churn():
     assert at(99.9, 0.4) == pytest.approx(0.5)  # 跌破 100：买回这一格，一来一回赚一格 2%
 
 
+def test_price_drift_inside_a_cell_does_not_trim():
+    p = {"lookback": 20, "levels": 10, "breakout": "hold", "min_step": 0.0}  # 90~110，每格 2
+    w = _box([100.0] * (_look(p) - 1) + [101.0])  # 价格在 100~102 这一格：该持有 40%~50%
+    assert _call(w, 0.53, p)[0] == pytest.approx(0.53)  # 币涨了、仓位占比漂到 53%：不穿线就不卖
+    assert _call(w, 0.37, p)[0] == pytest.approx(0.37)
+    assert _call(w, 0.56, p)[0] == pytest.approx(0.5)  # 偏出去超过半格：拉回这格的边上
+    assert _call(w, 0.30, p)[0] == pytest.approx(0.4)
+
+
 def test_grid_band():
     assert grid_band(0.0, 10) == (0.0, 0.0) and grid_band(1.0, 10) == (1.0, 1.0)
     assert grid_band(0.3, 10) == pytest.approx((0.3, 0.3))  # 3 × 0.1 的浮点误差不该多出一格

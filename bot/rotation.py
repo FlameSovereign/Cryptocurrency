@@ -35,7 +35,7 @@ import sys
 from dataclasses import dataclass
 from typing import Callable, Mapping, Sequence
 
-from .backtest import Result, _sharpe, format_result, max_drawdown
+from .backtest import Result, format_result, max_drawdown, sharpe
 from .candles import YEAR_MS, Candle, timeframe_ms
 from .engine import OrderPlan, Risk, plan_order, simulate_fill
 from .strategies import Context, Strategy
@@ -385,7 +385,7 @@ def run_backtest(
         total_return=final / budget - 1,
         cagr=(final / budget) ** (YEAR_MS / span) - 1 if span > 0 and final > 0 else -1.0,
         max_drawdown=max_drawdown(values),
-        sharpe=_sharpe(values, YEAR_MS / tf),
+        sharpe=sharpe(values, YEAR_MS / tf),
         fills=wallet.fills,
         round_trips=stats["round_trips"],
         win_rate=stats["wins"] / stats["round_trips"] if stats["round_trips"] else None,

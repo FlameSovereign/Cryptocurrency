@@ -41,10 +41,11 @@ class Result:
     fills: int
     round_trips: int
     win_rate: float | None
-    exposure: float  # 持仓时间占比
+    exposure: float  # 持仓时间占比（有仓位的 K 线占比）
     fees_paid: float
     hodl_return: float
     hodl_max_drawdown: float
+    avg_exposure: float = 0.0  # 平均仓位（每根 K 线 币值/净值 的均值；网格这类部分仓位的策略看这个）
     curve: list[tuple[int, float]] = field(default_factory=list, repr=False)
     trades: list[dict] = field(default_factory=list, repr=False)
 
@@ -64,7 +65,7 @@ def max_drawdown(values) -> float:
     return mdd
 
 
-def _sharpe(values, bars_per_year: float) -> float:
+def sharpe(values, bars_per_year: float) -> float:
     rets = [b / a - 1 for a, b in zip(values, values[1:]) if a > 0]
     if len(rets) < 2:
         return 0.0
@@ -108,6 +109,7 @@ def run_backtest(
     curve: list[tuple[int, float]] = [(candles[first].ts + tf, budget)]
     trades: list[dict] = []
     wins = round_trips = in_bars = 0
+    exposure_sum = 0.0
 
     for i in range(first, len(candles) - 1):
         bar, nxt = candles[i], candles[i + 1]
@@ -119,7 +121,7 @@ def run_backtest(
         plan = plan_order(d.target, wallet, price, threshold=threshold, min_cost=min_cost)
         if plan:
             fill = simulate_fill(plan, nxt.open, fee=fee, slippage=slippage, ts=nxt.ts)
-            pnl = wallet.apply(fill)
+            pnl = wallet.apply(fill, flat_below=min_cost)
             trades.append({"ts": nxt.ts, "side": fill.side, "price": fill.price, "base": fill.base,
                            "quote": fill.quote, "event": d.event, "reason": d.reason})
             if pnl is not None:
@@ -127,6 +129,7 @@ def run_backtest(
                 wins += pnl > 0
         if wallet.in_position:
             in_bars += 1
+        exposure_sum += wallet.exposure(nxt.close)
         curve.append((nxt.ts + tf, wallet.equity(nxt.close)))
 
     values = [v for _, v in curve]
@@ -148,7 +151,7 @@ def run_backtest(
         total_return=total,
         cagr=cagr,
         max_drawdown=max_drawdown(values),
-        sharpe=_sharpe(values, YEAR_MS / tf),
+        sharpe=sharpe(values, YEAR_MS / tf),
         fills=wallet.fills,
         round_trips=round_trips,
         win_rate=wins / round_trips if round_trips else None,
@@ -156,6 +159,7 @@ def run_backtest(
         fees_paid=wallet.fees_paid,
         hodl_return=hodl_curve[-1] - 1,
         hodl_max_drawdown=max_drawdown(hodl_curve),
+        avg_exposure=exposure_sum / max(1, len(curve) - 1),
         curve=curve,
         trades=trades,
     )
@@ -199,6 +203,11 @@ def main(argv: list[str] | None = None) -> int:
         bot = next((b for b in cfg.bots if b.name == args.bot), None)
         if bot is None:
             ap.error(f"config.toml 里没有机器人 {args.bot}")
+        if bot.is_rotation:  # 轮动机器人有自己的多币回测
+            from . import rotation
+
+            return rotation.main(["--bot", bot.name, "--days", str(args.days)] + (["--offline"] if args.offline else [])
+                                 + (["--json"] if args.json else []))
         strategy, symbol, timeframe, params = bot.strategy, bot.symbol, bot.timeframe, bot.params
         size, risk = bot.size, bot.risk
         slippage = bot.slippage if bot.slippage is not None else cfg.slippage

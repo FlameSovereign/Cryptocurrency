@@ -81,6 +81,9 @@ def tick(bot: BotConfig, cfg: Config, *, ex, broker, fear_greed, dry_run: bool =
     if msg := wallet.rebudget(bot.budget):
         rep["notes"].append(msg)
     rep["notes"] += broker.sync(wallet, bot.symbol, price, tag_prefix(bot.name), st["orders"], now_ms() - RECOVER_WINDOW_MS)
+    min_cost = broker.min_cost(bot.symbol, price)
+    if wallet.settle_dust(price, min_cost):
+        rep["notes"].append(f"手里只剩 {wallet.qty:.8g}（低于最小下单额，卖不掉），当作空仓")
 
     wallet.mark(price)
     exposure_before = wallet.exposure(price)
@@ -88,7 +91,7 @@ def tick(bot: BotConfig, cfg: Config, *, ex, broker, fear_greed, dry_run: bool =
     d = decide(strat, bot.params, candles, wallet, price, size=bot.size, risk=bot.risk, ctx=ctx)
     apply_events(wallet, d)
     slippage = bot.slippage if bot.slippage is not None else cfg.slippage
-    plan = plan_order(d.target, wallet, price, threshold=cfg.rebalance_threshold, min_cost=broker.min_cost(bot.symbol, price))
+    plan = plan_order(d.target, wallet, price, threshold=cfg.rebalance_threshold, min_cost=min_cost)
 
     def persist():
         st.update(symbol=bot.symbol, strategy=strat.name, timeframe=bot.timeframe, mode=broker.mode, wallet=wallet.to_dict())
@@ -101,7 +104,7 @@ def tick(bot: BotConfig, cfg: Config, *, ex, broker, fear_greed, dry_run: bool =
         except SkipOrder as e:
             rep["notes"].append(str(e))
         if fill:
-            wallet.apply(fill)
+            wallet.apply(fill, flat_below=min_cost)
             if fill.order_id:
                 st["orders"].append(fill.order_id)
             persist()  # 成交后第一时间存盘，后面就算崩了下次也能对上账

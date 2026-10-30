@@ -126,11 +126,13 @@ def last_extreme(ctx, lo: float, hi: float, days: int) -> tuple[str | None, int 
 def fear_greed_trend(candles, position, params, ctx):
     lo, hi, n, days = _trend_params(params)
     v = _index(ctx)
-    if v is None:
-        return _keep(position, ctx)
     close = candles[-1].close
     line = ind.ema(ind.closes(candles), n)[-1]
     gap = close / line - 1 if line else 0.0
+    if position >= HELD and close < line:  # 跌破均线是价格信号，指数断更也照样跑
+        return 0.0, f"收盘跌破 EMA{n}（{gap:+.1%}），趋势坏了，跑！"
+    if v is None:
+        return _keep(position, ctx)
     if position >= HELD:
         if v >= hi:
             return 0.0, f"恐惧贪婪指数 {v}（≥{hi:g}），极度贪婪，落袋为安，跑！"

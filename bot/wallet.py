@@ -63,8 +63,11 @@ class Wallet:
             self.high_water = price if self.high_water is None else max(self.high_water, price)
 
     # ---- 记账 ----
-    def apply(self, fill: Fill) -> float | None:
-        """记一笔成交。如果这笔成交让仓位回到空仓，返回这一轮的盈亏（按净值算，含手续费）。"""
+    def apply(self, fill: Fill, flat_below: float = 0.0) -> float | None:
+        """记一笔成交。如果这笔成交让仓位回到空仓，返回这一轮的盈亏（按净值算，含手续费）。
+
+        flat_below：交易所最小下单额。卖完剩下的零头低于它就卖不掉了，当作空仓（不然零头会触发止损、卡住冷静期）。
+        """
         closed_pnl = None
         if fill.side == "buy":
             if not self.in_position:
@@ -81,7 +84,7 @@ class Wallet:
                 self.realized_pnl += fill.quote - self.entry_price * sold
             self.qty -= sold
             self.cash += fill.quote
-            if self.qty * fill.price < self.dust_value():
+            if self.qty * fill.price < max(self.dust_value(), flat_below):
                 if self.entry_equity is not None:
                     closed_pnl = self.equity(fill.price) - self.entry_equity
                 self.entry_price = self.high_water = self.entry_equity = None
@@ -95,6 +98,13 @@ class Wallet:
         self.fees_paid += fill.fee_quote
         self.fills += 1
         return closed_pnl
+
+    def settle_dust(self, price: float, flat_below: float = 0.0) -> bool:
+        """手里只剩卖不掉的零头（低于最小下单额）就当空仓。返回有没有改动。"""
+        if self.in_position and self.qty * price < max(self.dust_value(), flat_below):
+            self.entry_price = self.high_water = self.entry_equity = None
+            return True
+        return False
 
     def rebudget(self, new_budget: float) -> str | None:
         """配置里改了预算：加预算就补现金，减预算就从现金里扣（扣不够就能扣多少扣多少）。"""

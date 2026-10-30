@@ -1,21 +1,26 @@
 """网格派：在一个价格区间里低吸高抛，赚来回震荡的钱。
 
-- grid：拿前 lookback 根 K 线的 [最低价, 最高价] 当网格区间，切成 levels 格。价格每跌下一格就
-  多买一格仓位，每涨上一格就卖掉一格，目标仓位 ≈ (上沿 − 收盘) / (上沿 − 下沿)，按格取整。
-  和 Gate 现货网格机器人是一个思路，区别是：
-  · 区间不用手动设，每根 K 线按前 lookback 根的高低点滚动更新（最新这根不算，否则永远破不了位）；
+- grid：拿前 lookback 根 K 线的 [最低价, 最高价] 当网格区间，切成 levels 格，价格每跌下一格就
+  多买一格仓位、每涨上一格就卖掉一格：目标仓位 ≈ (上沿 − 收盘) / (上沿 − 下沿)，按格取整。
+  和 Gate 现货网格机器人一个思路，区别是：
+  · 区间每根 K 线按前 lookback 根的高低点滚动更新（最新这根不算，否则永远破不了位）。不用
+    “均线 ± k 倍标准差”：高低点画的线落在真实成交过的价位上，只在破位或旧高低点滚出窗口时才挪，
+    更像一张挂好不动的网（同参数回测在加密币上也好一些）；
   · 只在 K 线收盘时看一眼（机器人每小时才醒一次），盘中来回穿格子的钱赚不到；
-  · 每格利润要盖过来回成本（手续费 0.2% × 2 + 滑点 ≈ 0.5%），min_step 规定格子最小间距，
-    区间太窄就自动少分几格。
-  跌破下沿怎么办（breakout）："hold" 满仓扛着（Gate 网格默认不设止损）；"stop" 止损空仓，
-  等 lookback 根 K 线里不再创新低（区间重新筑底）再重开网格。涨破上沿：卖光，空仓看它飞。
+  · 一格买卖来回要付约 0.5%（手续费 0.2% × 2 + 滑点），min_step 规定格子最小间距，区间太窄就少分几格。
+  跌破下沿（breakout）："hold" 满仓扛着（Gate 网格的止损价是选填的，不填就是这样）；"stop" 止损
+  空仓，等 lookback 根 K 线里不再创新低（区间重新筑底）再重开网格。涨破上沿：卖光，空仓看它飞。
 
-迟滞：真实网格在同一格里的持仓取决于价格从哪边来（从上面跌下来是 k 格，从下面涨上来是 k+1 格，
-买在第 i 条线、卖在上面一条线）。这里把当前仓位夹在 [k/n, (k+1)/n] 里，效果一样，不用藏状态。
+迟滞：真实网格同一格里的持仓取决于价格从哪边来（从上面跌下来是 k 格，从下面涨上来是 k+1 格，
+买在一条线、卖在上一条线）。这里把当前仓位夹在 [k/n, (k+1)/n] 里，效果一样，不用藏状态；价格在
+格子里晃带来的仓位漂移（不到半格）不去修剪，和真实网格“不穿线不成交”一致。
 
-共同的毛病：网格是“卖波动”的生意。震荡市小赚，单边市难受：单边涨早早卖飞，单边跌要么一路
-接到底（hold），要么止损后在更低的位置重开网格、再止损（stop）。平均只有半仓左右，长期打不过
-囤币是常态，该比的是半仓囤币（hodl --size 0.5，它本身就在做再平衡）。
+回测结论（Gate 真实 K 线，手续费 0.2%）：网格是“卖波动”的生意，赚得少、亏得多。60 天一段拆开看，
+震荡的段里网格过半跑赢半仓囤币，但只多赚零点几到一个多点；单边涨（早早卖飞）和单边跌（hold 一路
+接到底）的段里多半输，每段少 3~7 个点。加密币趋势多，整体打不过半仓囤币（hodl --size 0.5：网格
+平均也就半仓，该和它比，它本身也在做再平衡）；股票代币震荡多，4h 上小胜。格子越密越亏：教科书的
+20 根区间 + 10 格在 1h / 4h 上每个加密币成交约四千笔、全样本中位数亏八九成。stop 是熊市工具：单边跌时
+回撤减半，单边涨时一直空仓。
 """
 from __future__ import annotations
 
@@ -93,6 +98,10 @@ def breakdown_ago(candles, lookback: int) -> int | None:
     return None
 
 
+# 默认参数只用样本内（前 60%）挑，32 组里选的（含一组均线带对照）：200 根区间、3 格、每格至少 1%、
+# 跌破不止损，在 27 个（标的 × 周期）里赢半仓囤币 9 个，最多；并列的“5 格 + 每格至少 2%”在 6 个
+# （周期 × 篮子）分组里有 5 个中位数更低。格子越密越差：同样 200 根区间，20 格每年手续费约占本金 6%，
+# 3 格约 3%。stop 样本内只在 1h 加密币（这段全是熊市）上赢，整体不如 hold，所以默认不止损。
 @register(
     "grid",
     title="网格交易",
@@ -102,12 +111,14 @@ def breakdown_ago(candles, lookback: int) -> int | None:
     "'stop' 止损空仓等重新筑底；涨破上沿卖光。震荡市小赚，单边市不是卖飞就是套牢。",
     defaults={"lookback": 200, "levels": 3, "breakout": "hold", "min_step": 0.01},
     warmup=_grid_warmup,
-    timeframes=("4h",),
+    timeframes=("1d", "4h"),
 )
 def grid(candles, position, params, ctx):
     lookback, levels, breakout, min_step = _grid_params(params)
     close = candles[-1].close
     lower, upper = grid_range(candles, lookback)
+    if not (close > 0 and lower > 0):
+        return 0.0, "价格数据异常，空仓"
     if breakout == "stop":
         ago = breakdown_ago(candles, lookback)
         if ago == 0:
@@ -121,7 +132,10 @@ def grid(candles, position, params, ctx):
     n = grid_cells(lower, upper, close, levels, min_step)
     depth = (upper - close) / (upper - lower)
     lo, hi = grid_band(depth, n)
-    target = min(max(position, lo), hi)
+    # 真实网格每格买的是固定数量的币，价格在格子里晃，仓位占比也跟着晃，但不穿线就不成交。
+    # 所以仓位离这格的范围不到半格都算“还在这格”，不为漂移去修剪仓位（日线上这能省掉六成多的零碎成交）
+    tol = 0.5 / n
+    target = position if lo - tol < position < hi + tol else min(max(position, lo), hi)
     cell = min(n, int(depth * n + _EPS) + 1)
     where = f"网格 {lower:.6g}~{upper:.6g} 共 {n} 格，价格在从上往下第 {cell} 格"
     if target > position + _EPS:

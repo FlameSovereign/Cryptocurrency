@@ -17,12 +17,12 @@ max_order = 500             # 单笔买入最多花多少计价币（防手滑�
 # 别超过账户余额，最好给机器人单开一个子账户。可选字段：size（梭哈系数，默认 1）、params、risk、
 # slippage、enabled、paper_only。
 
-# 1) 海龟突破 · BTC 日线：突破 20 日新高就梭，跌破 10 日新低就跑。趋势派里回撤最小的。
+# 1) 时间序列动量 · BTC 日线：近 14 天涨超 5% 就梭，涨幅转负就跑。排行榜里加密日线全样本、样本外都排第一档。
 [[bots]]
-name = "btc-turtle"
+name = "btc-momentum"
 symbol = "BTC/USDT"
 timeframe = "1d"
-strategy = "donchian"
+strategy = "tsmom"
 budget = 100
 risk = { kill_switch = 0.5 }    # 净值跌到预算一半：清仓罢工
 
@@ -79,12 +79,12 @@ budget = 100
 slippage = 0.001
 enabled = false
 
-# 动量 · SOL 日线：14 天涨超 5% 上车，转负下车。
+# 海龟突破 · SOL 日线：突破 20 日新高就梭，跌破 10 日新低就跑。
 [[bots]]
-name = "sol-momentum"
+name = "sol-turtle"
 symbol = "SOL/USDT"
 timeframe = "1d"
-strategy = "tsmom"
+strategy = "donchian"
 budget = 100
 risk = { kill_switch = 0.5 }
 enabled = false

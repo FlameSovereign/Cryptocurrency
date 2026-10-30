@@ -35,13 +35,24 @@ class FearGreed:
     def __len__(self) -> int:
         return len(self._ts)
 
-    def at(self, asof_ms: int, lag_ms: int = 3_600_000) -> int | None:
+    @property
+    def first_ms(self) -> int | None:
+        return self._ts[0] if self._ts else None
+
+    @property
+    def last_ms(self) -> int | None:
+        return self._ts[-1] if self._ts else None
+
+    def at(self, asof_ms: int, lag_ms: int = 3_600_000, max_age_ms: int = 4 * 86_400_000) -> int | None:
         """决策时点 asof_ms 之前“已经发布”的最新值。
 
         指数每天 UTC 0 点左右更新；默认认为发布 1 小时后才可用，回测和实盘用同一个规则，避免偷看未来。
+        最新值比 asof_ms 老超过 max_age_ms（数据源断更）就返回 None，策略按“没拿到指数”处理，不拿旧数据硬做决定。
         """
         i = bisect.bisect_right(self._ts, asof_ms - lag_ms) - 1
-        return self._val[i] if i >= 0 else None
+        if i < 0 or asof_ms - self._ts[i] > max_age_ms:
+            return None
+        return self._val[i]
 
 
 @dataclass(frozen=True)
