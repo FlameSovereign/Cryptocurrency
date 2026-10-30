@@ -24,7 +24,7 @@ from .brokers import LiveBroker, PaperBroker, SkipOrder, new_tag, tag_prefix
 from .candles import now_ms, timeframe_ms
 from .config import ROOT, BotConfig, Config, load_config
 from .data import fetch_fear_greed, fetch_recent, make_exchange
-from .engine import EXIT_EVENTS, apply_events, decide, plan_order, simulate_fill
+from .engine import EXIT_EVENTS, Decision, apply_events, decide, plan_order, simulate_fill
 from .state import append_csv, load_bot, save_bot
 from .strategies import Context, get as get_strategy
 from .wallet import Wallet
@@ -32,6 +32,7 @@ from .wallet import Wallet
 TRADE_HEADER = ["time", "bot", "symbol", "side", "price", "base", "quote", "fee_quote", "event", "reason", "order_id", "equity", "note"]
 EQUITY_HEADER = ["time", "bot", "symbol", "price", "equity", "exposure", "signal", "target", "event"]
 RECOVER_WINDOW_MS = 3 * 86_400_000
+LIQUIDATE_REASON = "config 里设了 liquidate = true：卖光离场，之后不再买"
 NEW_LEDGER_GRACE_MS = 6 * 3_600_000  # 新账本也认领它出生前 6 小时内的单（第一次运行的存档没推上去也能找回）
 MODE_NAMES = {"paper": "模拟盘", "live": "实盘", "testnet": "测试网"}
 HOSTED_LIVE_REFUSAL = """\
@@ -130,6 +131,8 @@ def tick(bot: BotConfig, cfg: Config, *, ex, broker, fear_greed, dry_run: bool =
     exposure_before = wallet.exposure(price)
     ctx = Context(timeframe=bot.timeframe, asof_ms=candles[-1].ts + tf, symbol=bot.symbol, fear_greed=fear_greed)
     d = decide(strat, bot.params, candles, wallet, price, size=bot.size, risk=bot.risk, ctx=ctx)
+    if bot.liquidate and d.event not in ("kill_switch", "halted"):
+        d = Decision(0.0, d.signal, "liquidate", LIQUIDATE_REASON)
     apply_events(wallet, d)
     slippage = bot.slippage if bot.slippage is not None else cfg.slippage
     plan = plan_order(d.target, wallet, price, threshold=cfg.rebalance_threshold, min_cost=min_cost)
@@ -312,6 +315,8 @@ def rotation_tick(bot: BotConfig, cfg: Config, *, ex, broker, dry_run: bool = Fa
     last_ts = max((w[-1].ts for w in pool.values()), default=None)
     ctx = Context(timeframe=bot.timeframe, asof_ms=last_ts + tf if last_ts is not None else 0)
     d = rotation.decide(rot, bot.params, pool, wallet, price, risk=bot.risk, ctx=ctx)
+    if bot.liquidate and d.event not in ("kill_switch", "halted"):
+        d = rotation.RotationDecision(None, "liquidate", LIQUIDATE_REASON)
     if d.event == "kill_switch":
         wallet.halted = True
     if d.target and d.target != held:

@@ -47,9 +47,18 @@ jobs:
       - uses: actions/checkout@v5
 
       - uses: actions/setup-python@v6
+        if: vars.PYTHON_SETUP != 'system'
         with:
           python-version: "3.12"
           cache: pip
+
+      # 自托管 runner 上 setup-python 找不到你系统的 Python 包时（比如树莓派、群晖这类非 Ubuntu 的 Linux），
+      # 设仓库变量 PYTHON_SETUP = system，改用机器自己装的 python3（要 3.11 以上）
+      - name: 用机器自带的 Python
+        if: vars.PYTHON_SETUP == 'system'
+        run: |
+          python3 -m venv .venv
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
 
       - name: 安装依赖
         run: pip install -r requirements.txt

@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_PATH = ROOT / "config.toml"
 MODES = ("paper", "live", "testnet")
 BOT_KEYS = {"name", "symbol", "symbols", "timeframe", "strategy", "budget", "params", "size", "risk", "slippage", "enabled",
-            "paper_only", "reset"}
+            "paper_only", "reset", "liquidate"}
 
 
 @dataclass(frozen=True)
@@ -35,6 +35,7 @@ class BotConfig:
     symbols: tuple[str, ...] = ()  # 轮动机器人的篮子（单币机器人为空）
     paper_only: bool = False  # 只在模拟盘跑（对照组用）：切到实盘/测试网时自动跳过，永远不碰真钱
     reset: str | None = None  # 改成一个新值 = 下次运行清空账本重新开始（熔断后复活也用它）
+    liquidate: bool = False  # 收工：下次运行把手里的全卖掉，之后不再买（实盘的“一键清仓”）
 
     @property
     def is_rotation(self) -> bool:
@@ -176,6 +177,7 @@ def _bot(raw: Mapping, i: int) -> BotConfig:
         symbols=symbols,
         paper_only=_flag(raw, "paper_only", False, where),
         reset=_reset(raw, where),
+        liquidate=_flag(raw, "liquidate", False, where),
     )
 
 

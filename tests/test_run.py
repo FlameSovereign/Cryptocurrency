@@ -667,3 +667,26 @@ def test_empty_bot_mode_falls_back_to_config(tmp_path):
     p.write_text(CONFIG.replace('mode = "paper"', 'mode = "live"'))
     assert load_config(p, env={"BOT_MODE": ""}).mode == "live"  # Actions 里仓库变量没设 = 空字符串
     assert load_config(p, env={"BOT_MODE": "paper"}).mode == "paper"
+
+
+def test_liquidate_sells_everything_and_stays_out(setup):
+    cfg, ex, tmp = setup
+    broker = PaperBroker(ex, fee=0.002)
+    assert tick(cfg.bots[0], cfg, ex=ex, broker=broker, fear_greed=None)["fill"]["side"] == "buy"
+    cfg.path.write_text(CONFIG.replace("budget = 100\n", "budget = 100\nliquidate = true\n"))
+    cfg2 = load_config(cfg.path, env={"KURUMI_STATE_DIR": str(tmp / "state")})
+    rep = tick(cfg2.bots[0], cfg2, ex=ex, broker=broker, fear_greed=None)
+    assert rep["event"] == "liquidate" and rep["fill"]["side"] == "sell"
+    rep = tick(cfg2.bots[0], cfg2, ex=ex, broker=broker, fear_greed=None)  # 策略还在喊梭，也不再买
+    assert rep["fill"] is None and rep["exposure"] < 0.01
+
+
+def test_rotation_liquidate(rot):
+    import dataclasses
+
+    cfg, bot, _ = rot
+    ex = MultiExchange(_daily(BTC=0.0, ETH=0.50, SOL=0.10))
+    broker = PaperBroker(ex, fee=cfg.fee)
+    assert rotation_tick(bot, cfg, ex=ex, broker=broker)["holding"] == "ETH/USDT"
+    r = rotation_tick(dataclasses.replace(bot, liquidate=True), cfg, ex=ex, broker=broker)
+    assert r["event"] == "liquidate" and r["holding"] is None and [f["side"] for f in r["fills"]] == ["sell"]
