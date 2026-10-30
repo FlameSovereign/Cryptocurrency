@@ -1,0 +1,3 @@
+time,bot,symbol,side,price,base,quote,fee_quote,event,reason,order_id,equity,note
+2026-10-30 23:37:13,btc-hodl,BTC/USDT,buy,77318.33985,0.001290767497,100,0.2,,拿住不动,t-ks-27dee6-mvvm3lk8,99.7501,
+2026-10-30 23:37:13,btc-monkey,BTC/USDT,buy,77318.4399,0.001290765827,100,0.2,,猴子说：梭！,t-ks-1734f1-mvvm3lxj,99.7501,

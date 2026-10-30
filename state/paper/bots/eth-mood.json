@@ -1,0 +1,34 @@
+{
+  "bot": "eth-mood",
+  "created_ms": 1793403433025,
+  "last": {
+    "candle_close": "2026-10-30 00:00:00",
+    "equity": 100.0,
+    "event": null,
+    "price": 2245.65,
+    "reason": "恐惧贪婪指数 51，没涨到上车线 70，空仓等",
+    "signal": 0.0,
+    "target": 0.0
+  },
+  "mode": "paper",
+  "orders": [],
+  "runs": 1,
+  "strategy": "sentiment_momentum",
+  "symbol": "ETH/USDT",
+  "timeframe": "1d",
+  "updated_ms": 1793403433025,
+  "wallet": {
+    "budget": 100.0,
+    "cash": 100.0,
+    "entry_equity": null,
+    "entry_price": null,
+    "exit_lock": false,
+    "fees_paid": 0.0,
+    "fills": 0,
+    "halted": false,
+    "high_water": null,
+    "holding": null,
+    "qty": 0.0,
+    "realized_pnl": 0.0
+  }
+}
