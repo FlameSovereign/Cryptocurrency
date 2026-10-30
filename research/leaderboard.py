@@ -116,7 +116,7 @@ def main(argv=None) -> int:
     ap.add_argument("--only")
     ap.add_argument("--tf", default="1h,4h,1d")
     ap.add_argument("--workers", type=int, default=4)
-    ap.add_argument("--out", default=str(OUT))
+    ap.add_argument("--out", default=str(OUT), help="输出文件；0.1%% 费率版存成 research/leaderboard-fee0.1.md")
     ap.add_argument("--json")
     ap.add_argument("--fee", type=float, default=H.FEE, help="手续费率（默认 0.002；Gate 帮助中心写 VIP0 是 0.001）")
     a = ap.parse_args(argv)
