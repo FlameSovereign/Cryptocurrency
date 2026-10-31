@@ -19,3 +19,13 @@ time_utc,rank,id,symbol,name,market_cap_rank,price_usd,change_24h_pct
 2026-10-31 00:59,8,bitcoin,BTC,Bitcoin,1,77400.13894,0.3495
 2026-10-31 00:59,9,quant-network,QNT,Quant,37,192.507784,7.348
 2026-10-31 00:59,10,ethereum,ETH,Ethereum,2,2246.692911,1.333
+2026-10-31 09:55,1,hyperliquid,HYPE,Hyperliquid,11,87.00625718,-4.637
+2026-10-31 09:55,2,bitcoin,BTC,Bitcoin,1,77378.62266,-0.3347
+2026-10-31 09:55,3,sui,SUI,Sui,30,0.8985019147,1.88
+2026-10-31 09:55,4,pudgy-penguins,PENGU,Pudgy Penguins,113,0.007293008975,2.785
+2026-10-31 09:55,5,canton-network,CC,Canton,28,0.09645096905,3.501
+2026-10-31 09:55,6,aerodrome-finance,AERO,Aerodrome Finance,105,0.6221083353,-1.079
+2026-10-31 09:55,7,aave,AAVE,Aave,47,131.655351,5.765
+2026-10-31 09:55,8,lisk,LSK,Lisk,434,0.2350068327,17.38
+2026-10-31 09:55,9,monad,MON,Monad,157,0.01920499495,-2.154
+2026-10-31 09:55,10,infinity-ground,AIN,Infinity Ground,439,0.2771699089,63.08
