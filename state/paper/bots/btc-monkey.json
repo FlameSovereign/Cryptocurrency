@@ -2,10 +2,10 @@
   "bot": "btc-monkey",
   "created_ms": 1793403433926,
   "last": {
-    "candle_close": "2026-10-30 00:00:00",
-    "equity": 99.75012493753124,
+    "candle_close": "2026-10-31 00:00:00",
+    "equity": 99.64170060808483,
     "event": null,
-    "price": 77279.8,
+    "price": 77195.8,
     "reason": "猴子说：梭！",
     "signal": 1.0,
     "target": 1.0
@@ -14,11 +14,11 @@
   "orders": [
     "t-ks-1734f1-mvvm3lxj"
   ],
-  "runs": 1,
+  "runs": 2,
   "strategy": "monkey",
   "symbol": "BTC/USDT",
   "timeframe": "1d",
-  "updated_ms": 1793403433927,
+  "updated_ms": 1793424018635,
   "wallet": {
     "budget": 100.0,
     "cash": 0.0,
