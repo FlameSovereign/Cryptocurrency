@@ -9,3 +9,13 @@ time_utc,rank,id,symbol,name,market_cap_rank,price_usd,change_24h_pct
 2026-10-30 20:05,8,aave,AAVE,Aave,49,127.2557196,-4.647
 2026-10-30 20:05,9,uniswap,UNI,Uniswap,25,6.968467056,-2.738
 2026-10-30 20:05,10,chainlink,LINK,Chainlink,17,11.15306181,-4.598
+2026-10-31 00:59,1,super-pepe,SP,Super Pepe,945,0.01675322464,-2.92
+2026-10-31 00:59,2,hyperliquid,HYPE,Hyperliquid,11,89.28859237,-2.433
+2026-10-31 00:59,3,near,NEAR,NEAR Protocol,21,4.344948291,8.667
+2026-10-31 00:59,4,pudgy-penguins,PENGU,Pudgy Penguins,111,0.007486134723,9.422
+2026-10-31 00:59,5,pearl-2,PEARL,Pearl,98,1.526732726,-0.5265
+2026-10-31 00:59,6,kinetiq,KNTQ,Kinetiq,198,0.4987182042,6.256
+2026-10-31 00:59,7,monad,MON,Monad,155,0.01973562514,5.981
+2026-10-31 00:59,8,bitcoin,BTC,Bitcoin,1,77400.13894,0.3495
+2026-10-31 00:59,9,quant-network,QNT,Quant,37,192.507784,7.348
+2026-10-31 00:59,10,ethereum,ETH,Ethereum,2,2246.692911,1.333
