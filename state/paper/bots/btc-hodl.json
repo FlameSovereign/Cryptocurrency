@@ -3,9 +3,9 @@
   "created_ms": 1793403433448,
   "last": {
     "candle_close": "2026-11-01 00:00:00",
-    "equity": 100.48160287807836,
+    "equity": 100.79383953560149,
     "event": null,
-    "price": 77846.4,
+    "price": 78088.3,
     "reason": "拿住不动",
     "signal": 1.0,
     "target": 1.0
@@ -14,11 +14,11 @@
   "orders": [
     "t-ks-27dee6-mvvm3lk8"
   ],
-  "runs": 9,
+  "runs": 10,
   "strategy": "hodl",
   "symbol": "BTC/USDT",
   "timeframe": "1d",
-  "updated_ms": 1793561400244,
+  "updated_ms": 1793575823689,
   "wallet": {
     "budget": 100.0,
     "cash": 0.0,
@@ -28,7 +28,7 @@
     "fees_paid": 0.2,
     "fills": 1,
     "halted": false,
-    "high_water": 78035.5,
+    "high_water": 78088.3,
     "holding": null,
     "qty": 0.0012907674969950874,
     "realized_pnl": 0.0
