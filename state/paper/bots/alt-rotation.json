@@ -12,7 +12,7 @@
   },
   "mode": "paper",
   "orders": [],
-  "runs": 7,
+  "runs": 8,
   "strategy": "rotation",
   "symbol": "",
   "symbols": [
@@ -23,7 +23,7 @@
     "GT/USDT"
   ],
   "timeframe": "1d",
-  "updated_ms": 1793517624718,
+  "updated_ms": 1793545041197,
   "wallet": {
     "budget": 100.0,
     "cash": 100.0,
