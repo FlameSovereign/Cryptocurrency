@@ -79,3 +79,13 @@ time_utc,rank,id,symbol,name,market_cap_rank,price_usd,change_24h_pct
 2026-11-01 22:18,8,kinetiq,KNTQ,Kinetiq,191,0.5351720733,-5.69
 2026-11-01 22:18,9,pudgy-penguins,PENGU,Pudgy Penguins,114,0.007216019129,-1.213
 2026-11-01 22:18,10,binancecoin,BNB,BNB,4,706.3949662,0.4843
+2026-11-02 06:42,1,bitcoin,BTC,Bitcoin,1,78130.80601,0.3238
+2026-11-02 06:42,2,quantus,QTC,Quantus,787,70.31606553,-3.581
+2026-11-02 06:42,3,near,NEAR,NEAR Protocol,21,4.174527038,-4.896
+2026-11-02 06:42,4,hyperliquid,HYPE,Hyperliquid,11,86.87912233,-0.9704
+2026-11-02 06:42,5,pearl-2,PEARL,Pearl,98,1.526900938,1.785
+2026-11-02 06:42,6,injective-protocol,INJ,Injective,86,7.168773842,-2.217
+2026-11-02 06:42,7,lighter,LIT,Lighter,82,3.14761164,-0.358
+2026-11-02 06:42,8,pons,PONS,Pons,198,0.2331027398,-3.98
+2026-11-02 06:42,9,kinetiq,KNTQ,Kinetiq,194,0.503869639,-4.084
+2026-11-02 06:42,10,pudgy-penguins,PENGU,Pudgy Penguins,114,0.007169738901,-1.659
