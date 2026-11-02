@@ -2,17 +2,17 @@
   "bot": "alt-rotation",
   "created_ms": 1793403431442,
   "last": {
-    "candle_close": "2026-11-01 00:00:00",
+    "candle_close": "2026-11-02 00:00:00",
     "equity": 100.0,
     "event": null,
     "holding": null,
     "price": null,
-    "reason": "最强的 BTC 也只有 -8.7%（近 30 根），拿现金观望",
+    "reason": "最强的 BTC 也只有 -7.3%（近 30 根），拿现金观望",
     "target": null
   },
   "mode": "paper",
   "orders": [],
-  "runs": 10,
+  "runs": 11,
   "strategy": "rotation",
   "symbol": "",
   "symbols": [
@@ -23,7 +23,7 @@
     "GT/USDT"
   ],
   "timeframe": "1d",
-  "updated_ms": 1793575823205,
+  "updated_ms": 1793598432332,
   "wallet": {
     "budget": 100.0,
     "cash": 100.0,
