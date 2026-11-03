@@ -109,3 +109,13 @@ time_utc,rank,id,symbol,name,market_cap_rank,price_usd,change_24h_pct
 2026-11-03 03:02,8,solana,SOL,Solana,7,91.9802509,-3.132
 2026-11-03 03:02,9,bittensor,TAO,Bittensor,38,223.0543862,-4.03
 2026-11-03 03:02,10,aerodrome-finance,AERO,Aerodrome Finance,108,0.6005794237,-4.219
+2026-11-03 11:16,1,audacity-2,DACITYCOIN,AudaCity,815,0.02091108326,-9.906
+2026-11-03 11:16,2,near,NEAR,NEAR Protocol,21,3.845052811,-6.22
+2026-11-03 11:16,3,monad,MON,Monad,159,0.01727816562,-6.648
+2026-11-03 11:16,4,bitcoin,BTC,Bitcoin,1,77081.04986,-0.9721
+2026-11-03 11:16,5,quantus,QTC,Quantus,790,68.1225141,-2.244
+2026-11-03 11:16,6,zcash,ZEC,Zcash,11,1167.998664,-6.131
+2026-11-03 11:16,7,fetch-ai,FET,Artificial Superintelligence Alliance,121,0.15464881,-2.277
+2026-11-03 11:16,8,aave,AAVE,Aave,47,128.2636605,-2.198
+2026-11-03 11:16,9,quack-ai,Q,Quack AI,213,0.02928008329,8.859
+2026-11-03 11:16,10,pudgy-penguins,PENGU,Pudgy Penguins,114,0.006910959194,-3.214
