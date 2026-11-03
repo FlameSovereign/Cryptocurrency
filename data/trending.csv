@@ -99,3 +99,13 @@ time_utc,rank,id,symbol,name,market_cap_rank,price_usd,change_24h_pct
 2026-11-02 19:43,8,aerodrome-finance,AERO,Aerodrome Finance,110,0.6005528835,-4.84
 2026-11-02 19:43,9,kinetiq,KNTQ,Kinetiq,203,0.4582789803,-16.67
 2026-11-02 19:43,10,bittensor,TAO,Bittensor,38,223.2653432,-3.752
+2026-11-03 03:02,1,bitcoin,BTC,Bitcoin,1,76788.09917,-2.081
+2026-11-03 03:02,2,sui,SUI,Sui,30,0.8684580301,-3.759
+2026-11-03 03:02,3,polygon-ecosystem-token,POL,POL (ex-MATIC),75,0.08745231389,-3.253
+2026-11-03 03:02,4,near,NEAR,NEAR Protocol,21,3.814386823,-10.91
+2026-11-03 03:02,5,ethereum,ETH,Ethereum,2,2253.099232,-1.732
+2026-11-03 03:02,6,pepe,PEPE,Pepe,46,4.722675217e-06,-3.499
+2026-11-03 03:02,7,kinetiq,KNTQ,Kinetiq,210,0.4355543676,-16.9
+2026-11-03 03:02,8,solana,SOL,Solana,7,91.9802509,-3.132
+2026-11-03 03:02,9,bittensor,TAO,Bittensor,38,223.0543862,-4.03
+2026-11-03 03:02,10,aerodrome-finance,AERO,Aerodrome Finance,108,0.6005794237,-4.219
