@@ -169,3 +169,13 @@ time_utc,rank,id,symbol,name,market_cap_rank,price_usd,change_24h_pct
 2026-11-05 01:43,8,raydium,RAY,Raydium,111,1.749896159,15.8
 2026-11-05 01:43,9,solana,SOL,Solana,7,95.78353237,4.327
 2026-11-05 01:43,10,ethereum,ETH,Ethereum,2,2420.523202,7.119
+2026-11-05 11:26,1,pearl-2,PEARL,Pearl,95,1.689466529,16.29
+2026-11-05 11:26,2,official-trump,TRUMP,Official Trump,123,1.262627775,-14.9
+2026-11-05 11:26,3,bitcoin,BTC,Bitcoin,1,80311.17277,2.27
+2026-11-05 11:26,4,injective-protocol,INJ,Injective,83,8.465090732,10.53
+2026-11-05 11:26,5,pudgy-penguins,PENGU,Pudgy Penguins,112,0.007208497471,-1.456
+2026-11-05 11:26,6,aerodrome-finance,AERO,Aerodrome Finance,150,0.6559912889,3.496
+2026-11-05 11:26,7,collector-crypt,CARDS,Collector Crypt,146,0.2838265141,10.51
+2026-11-05 11:26,8,quant-network,QNT,Quant,34,203.1440564,1.329
+2026-11-05 11:26,9,kinetiq,KNTQ,Kinetiq,205,0.4689037611,-7.717
+2026-11-05 11:26,10,quantus,QTC,Quantus,765,72.10703737,1.806
