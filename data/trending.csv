@@ -159,3 +159,13 @@ time_utc,rank,id,symbol,name,market_cap_rank,price_usd,change_24h_pct
 2026-11-04 19:59,8,pudgy-penguins,PENGU,Pudgy Penguins,112,0.007228805389,3.189
 2026-11-04 19:59,9,official-trump,TRUMP,Official Trump,120,1.304859879,-17.21
 2026-11-04 19:59,10,figure-heloc,FIGR_HELOC,Figure Heloc,9,1.029301422,-0.9217
+2026-11-05 01:43,1,official-trump,TRUMP,Official Trump,123,1.256983614,-16.62
+2026-11-05 01:43,2,bitcoin,BTC,Bitcoin,1,80484.62796,4.732
+2026-11-05 01:43,3,ripple,XRP,XRP,5,1.301962231,4.137
+2026-11-05 01:43,4,monad,MON,Monad,164,0.01813291489,2.98
+2026-11-05 01:43,5,venice-token,VVV,Venice Token,74,21.19035166,-3.944
+2026-11-05 01:43,6,aerodrome-finance,AERO,Aerodrome Finance,150,0.6392170202,3.858
+2026-11-05 01:43,7,near,NEAR,NEAR Protocol,21,4.029942043,7.02
+2026-11-05 01:43,8,raydium,RAY,Raydium,111,1.749896159,15.8
+2026-11-05 01:43,9,solana,SOL,Solana,7,95.78353237,4.327
+2026-11-05 01:43,10,ethereum,ETH,Ethereum,2,2420.523202,7.119
