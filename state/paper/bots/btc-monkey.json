@@ -2,10 +2,10 @@
   "bot": "btc-monkey",
   "created_ms": 1793403433926,
   "last": {
-    "candle_close": "2026-11-04 00:00:00",
-    "equity": 104.1574448529451,
+    "candle_close": "2026-11-05 00:00:00",
+    "equity": 104.16286606941743,
     "event": null,
-    "price": 80694.3,
+    "price": 80698.5,
     "reason": "猴子说：梭！",
     "signal": 1.0,
     "target": 1.0
@@ -14,11 +14,11 @@
   "orders": [
     "t-ks-1734f1-mvvm3lxj"
   ],
-  "runs": 20,
+  "runs": 21,
   "strategy": "monkey",
   "symbol": "BTC/USDT",
   "timeframe": "1d",
-  "updated_ms": 1793831542576,
+  "updated_ms": 1793849120560,
   "wallet": {
     "budget": 100.0,
     "cash": 0.0,
@@ -28,7 +28,7 @@
     "fees_paid": 0.2,
     "fills": 1,
     "halted": false,
-    "high_water": 80694.3,
+    "high_water": 80698.5,
     "holding": null,
     "qty": 0.0012907658267429683,
     "realized_pnl": 0.0
