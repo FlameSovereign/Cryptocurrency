@@ -179,3 +179,13 @@ time_utc,rank,id,symbol,name,market_cap_rank,price_usd,change_24h_pct
 2026-11-05 11:26,8,quant-network,QNT,Quant,34,203.1440564,1.329
 2026-11-05 11:26,9,kinetiq,KNTQ,Kinetiq,205,0.4689037611,-7.717
 2026-11-05 11:26,10,quantus,QTC,Quantus,765,72.10703737,1.806
+2026-11-05 20:13,1,bitcoin,BTC,Bitcoin,1,76222.33774,-4.63
+2026-11-05 20:13,2,zcash,ZEC,Zcash,10,1247.75942,-2.194
+2026-11-05 20:13,3,hyperliquid,HYPE,Hyperliquid,11,77.93297329,-6.425
+2026-11-05 20:13,4,pudgy-penguins,PENGU,Pudgy Penguins,113,0.006573688485,-8.837
+2026-11-05 20:13,5,solana,SOL,Solana,7,89.96059714,-4.735
+2026-11-05 20:13,6,injective-protocol,INJ,Injective,82,8.199300017,5.213
+2026-11-05 20:13,7,official-trump,TRUMP,Official Trump,124,1.214848125,-5.895
+2026-11-05 20:13,8,lighter,LIT,Lighter,78,3.488721559,4.043
+2026-11-05 20:13,9,sui,SUI,Sui,30,0.8591938439,-6.527
+2026-11-05 20:13,10,near,NEAR,NEAR Protocol,21,3.70671899,-6.931
