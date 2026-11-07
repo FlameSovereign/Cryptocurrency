@@ -219,3 +219,13 @@ time_utc,rank,id,symbol,name,market_cap_rank,price_usd,change_24h_pct
 2026-11-06 19:39,8,collector-crypt,CARDS,Collector Crypt,153,0.2465816731,-5.501
 2026-11-06 19:39,9,ripple,XRP,XRP,5,1.181598431,-4.493
 2026-11-06 19:39,10,hyperliquid,HYPE,Hyperliquid,11,78.12811238,-0.3351
+2026-11-07 01:07,1,pudgy-penguins,PENGU,Pudgy Penguins,114,0.006579264203,-0.2092
+2026-11-07 01:07,2,pearl-2,PEARL,Pearl,88,1.817686595,12.61
+2026-11-07 01:07,3,bitcoin,BTC,Bitcoin,1,75896.88589,-0.2938
+2026-11-07 01:07,4,hyperliquid,HYPE,Hyperliquid,11,79.06703861,2.066
+2026-11-07 01:07,5,zcash,ZEC,Zcash,10,1338.913314,1.312
+2026-11-07 01:07,6,ethereum,ETH,Ethereum,2,2240.137671,0.0877
+2026-11-07 01:07,7,ripple,XRP,XRP,5,1.179817491,-2.987
+2026-11-07 01:07,8,near,NEAR,NEAR Protocol,21,3.741150314,-0.1563
+2026-11-07 01:07,9,injective-protocol,INJ,Injective,81,8.379976897,1.347
+2026-11-07 01:07,10,pons,PONS,Pons,221,0.1963987267,6.377
