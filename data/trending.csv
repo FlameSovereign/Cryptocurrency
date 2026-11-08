@@ -259,3 +259,13 @@ time_utc,rank,id,symbol,name,market_cap_rank,price_usd,change_24h_pct
 2026-11-07 22:14,8,quant-network,QNT,Quant,34,195.8948619,0.5469
 2026-11-07 22:14,9,kaspa,KAS,Kaspa,81,0.02950489592,-2.648
 2026-11-07 22:14,10,venice-token,VVV,Venice Token,73,20.29307868,-3.353
+2026-11-08 06:36,1,pudgy-penguins,PENGU,Pudgy Penguins,115,0.006364046611,-2.732
+2026-11-08 06:36,2,bitcoin,BTC,Bitcoin,1,75760.45978,-0.2705
+2026-11-08 06:36,3,kinetiq,KNTQ,Kinetiq,194,0.4993770864,3.76
+2026-11-08 06:36,4,unifai-network,UAI,UnifAI Network,870,0.07711707717,-38.9
+2026-11-08 06:36,5,near,NEAR,NEAR Protocol,21,3.714928657,-0.6369
+2026-11-08 06:36,6,pearl-2,PEARL,Pearl,89,1.767656324,0.5619
+2026-11-08 06:36,7,stellar,XLM,Stellar,19,0.1505610693,-1.436
+2026-11-08 06:36,8,akedo,AKE,Akedo,236,0.005134453961,-11.47
+2026-11-08 06:36,9,pump-fun,PUMP,Pump.fun,55,0.003676078076,-5.797
+2026-11-08 06:36,10,the-open-network,GRAM,Gram (prev. Toncoin),32,1.060389884,-4.055
