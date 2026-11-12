@@ -369,3 +369,13 @@ time_utc,rank,id,symbol,name,market_cap_rank,price_usd,change_24h_pct
 2026-11-11 17:24,8,hyperliquid,HYPE,Hyperliquid,10,73.98856347,3.898
 2026-11-11 17:24,9,sui,SUI,Sui,28,0.8459421456,4.558
 2026-11-11 17:24,10,venice-token,VVV,Venice Token,73,20.5585509,9.931
+2026-11-12 00:57,1,zignaly,ZIG,ZIG Finance,417,0.037846485,-1.932
+2026-11-12 00:57,2,pudgy-penguins,PENGU,Pudgy Penguins,116,0.006270667981,0.6055
+2026-11-12 00:57,3,pons,PONS,Pons,262,0.1530733685,3.705
+2026-11-12 00:57,4,hyperliquid,HYPE,Hyperliquid,10,72.24349285,0.143
+2026-11-12 00:57,5,bittensor,TAO,Bittensor,39,217.5238088,-0.7143
+2026-11-12 00:57,6,lighter,LIT,Lighter,79,3.261384751,-5.515
+2026-11-12 00:57,7,zcash,ZEC,Zcash,11,993.1370673,-4.445
+2026-11-12 00:57,8,pi-network,PI,Pi Network,82,0.07013583143,-2.208
+2026-11-12 00:57,9,uniswap,UNI,Uniswap,26,6.225624504,-7.024
+2026-11-12 00:57,10,bitcoin,BTC,Bitcoin,1,74010.85826,0.6907
