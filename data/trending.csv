@@ -379,3 +379,13 @@ time_utc,rank,id,symbol,name,market_cap_rank,price_usd,change_24h_pct
 2026-11-12 00:57,8,pi-network,PI,Pi Network,82,0.07013583143,-2.208
 2026-11-12 00:57,9,uniswap,UNI,Uniswap,26,6.225624504,-7.024
 2026-11-12 00:57,10,bitcoin,BTC,Bitcoin,1,74010.85826,0.6907
+2026-11-12 11:44,1,bitcoin,BTC,Bitcoin,1,73097.56247,-1.185
+2026-11-12 11:44,2,zignaly,ZIG,ZIG Finance,419,0.03678079074,-2.917
+2026-11-12 11:44,3,pudgy-penguins,PENGU,Pudgy Penguins,115,0.006123661008,-2.49
+2026-11-12 11:44,4,zcash,ZEC,Zcash,11,978.9238941,-1.04
+2026-11-12 11:44,5,uniswap,UNI,Uniswap,26,6.119520795,-5.205
+2026-11-12 11:44,6,pump-fun,PUMP,Pump.fun,56,0.003401464572,-5.183
+2026-11-12 11:44,7,bittensor,TAO,Bittensor,38,212.174305,-3.109
+2026-11-12 11:44,8,solana,SOL,Solana,7,82.4531569,-1.635
+2026-11-12 11:44,9,seppuku,SEPPUKU,Seppuku,867,0.017450494,8.178
+2026-11-12 11:44,10,ripple,XRP,XRP,6,1.038455181,-1.67
