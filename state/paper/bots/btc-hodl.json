@@ -2,10 +2,10 @@
   "bot": "btc-hodl",
   "created_ms": 1793403433448,
   "last": {
-    "candle_close": "2026-11-12 00:00:00",
-    "equity": 92.79714766146782,
+    "candle_close": "2026-11-13 00:00:00",
+    "equity": 92.24637717050003,
     "event": null,
-    "price": 71893.0,
+    "price": 71466.3,
     "reason": "拿住不动",
     "signal": 1.0,
     "target": 1.0
@@ -14,11 +14,11 @@
   "orders": [
     "t-ks-27dee6-mvvm3lk8"
   ],
-  "runs": 48,
+  "runs": 49,
   "strategy": "hodl",
   "symbol": "BTC/USDT",
   "timeframe": "1d",
-  "updated_ms": 1794506882210,
+  "updated_ms": 1794528396837,
   "wallet": {
     "budget": 100.0,
     "cash": 0.0,
