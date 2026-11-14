@@ -459,3 +459,13 @@ time_utc,rank,id,symbol,name,market_cap_rank,price_usd,change_24h_pct
 2026-11-14 18:26,8,lighter,LIT,Lighter,82,2.906498466,-8.854
 2026-11-14 18:26,9,bittensor,TAO,Bittensor,39,193.4013092,-9.69
 2026-11-14 18:26,10,uniswap,UNI,Uniswap,29,4.989695079,-13.66
+2026-11-14 22:41,1,bitcoin,BTC,Bitcoin,1,63643.50221,-6.858
+2026-11-14 22:41,2,hyperliquid,HYPE,Hyperliquid,10,62.89652841,-12.39
+2026-11-14 22:41,3,near,NEAR,NEAR Protocol,23,2.934632756,-14.63
+2026-11-14 22:41,4,ethereum,ETH,Ethereum,2,1748.618887,-9.289
+2026-11-14 22:41,5,aster-2,ASTER,Aster,59,0.497723026,-22.85
+2026-11-14 22:41,6,solana,SOL,Solana,7,68.99867894,-11.85
+2026-11-14 22:41,7,uniswap,UNI,Uniswap,30,4.726587519,-17.48
+2026-11-14 22:41,8,kava,KAVA,Kava,474,0.03599208761,-46.9
+2026-11-14 22:41,9,chainlink,LINK,Chainlink,17,8.683913017,-11.33
+2026-11-14 22:41,10,ethena,ENA,Ethena,52,0.1123061372,-15.7
