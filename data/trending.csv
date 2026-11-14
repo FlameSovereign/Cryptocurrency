@@ -449,3 +449,13 @@ time_utc,rank,id,symbol,name,market_cap_rank,price_usd,change_24h_pct
 2026-11-14 10:51,8,solana,SOL,Solana,7,75.70283541,-5.726
 2026-11-14 10:51,9,injective-protocol,INJ,Injective,79,7.909822638,3.862
 2026-11-14 10:51,10,cardano,ADA,Cardano,18,0.1634565393,-4.579
+2026-11-14 18:26,1,bitcoin,BTC,Bitcoin,1,65741.18061,-4.492
+2026-11-14 18:26,2,hyperliquid,HYPE,Hyperliquid,10,65.30601095,-9.929
+2026-11-14 18:26,3,solana,SOL,Solana,7,72.41971703,-9.562
+2026-11-14 18:26,4,kava,KAVA,Kava,464,0.0379992808,-44.25
+2026-11-14 18:26,5,ethereum,ETH,Ethereum,2,1832.139672,-5.466
+2026-11-14 18:26,6,near,NEAR,NEAR Protocol,23,3.103133187,-11.08
+2026-11-14 18:26,7,pump-fun,PUMP,Pump.fun,57,0.002953413665,-15.15
+2026-11-14 18:26,8,lighter,LIT,Lighter,82,2.906498466,-8.854
+2026-11-14 18:26,9,bittensor,TAO,Bittensor,39,193.4013092,-9.69
+2026-11-14 18:26,10,uniswap,UNI,Uniswap,29,4.989695079,-13.66
