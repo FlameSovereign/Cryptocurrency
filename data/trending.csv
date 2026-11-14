@@ -429,3 +429,13 @@ time_utc,rank,id,symbol,name,market_cap_rank,price_usd,change_24h_pct
 2026-11-13 19:58,8,pepe,PEPE,Pepe,45,4.457722374e-06,0.2855
 2026-11-13 19:58,9,pearl-2,PEARL,Pearl,92,1.546825438,17.43
 2026-11-13 19:58,10,injective-protocol,INJ,Injective,79,8.290311244,12.28
+2026-11-14 01:41,1,ni-hao-cat-2,MIHAO,ni hao cat,951,0.01549599932,2.539
+2026-11-14 01:41,2,bitcoin,BTC,Bitcoin,1,68252.04505,-3.817
+2026-11-14 01:41,3,akedo,AKE,Akedo,137,0.01188266785,346.1
+2026-11-14 01:41,4,pudgy-penguins,PENGU,Pudgy Penguins,114,0.006070983133,-1.873
+2026-11-14 01:41,5,pearl-2,PEARL,Pearl,91,1.551803075,11.31
+2026-11-14 01:41,6,hyperliquid,HYPE,Hyperliquid,10,71.37968377,-1.98
+2026-11-14 01:41,7,avalanche-2,AVAX,Avalanche,25,8.203253734,-1.753
+2026-11-14 01:41,8,internet-computer,ICP,Internet Computer,60,2.428834241,-5.742
+2026-11-14 01:41,9,ripple,XRP,XRP,6,1.008173196,-2.184
+2026-11-14 01:41,10,near,NEAR,NEAR Protocol,21,3.426646139,-0.2885
