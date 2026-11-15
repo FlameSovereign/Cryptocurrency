@@ -469,3 +469,13 @@ time_utc,rank,id,symbol,name,market_cap_rank,price_usd,change_24h_pct
 2026-11-14 22:41,8,kava,KAVA,Kava,474,0.03599208761,-46.9
 2026-11-14 22:41,9,chainlink,LINK,Chainlink,17,8.683913017,-11.33
 2026-11-14 22:41,10,ethena,ENA,Ethena,52,0.1123061372,-15.7
+2026-11-15 07:04,1,bitcoin,BTC,Bitcoin,1,64346.88109,-4.439
+2026-11-15 07:04,2,kava,KAVA,Kava,474,0.03645850974,-46.06
+2026-11-15 07:04,3,solana,SOL,Solana,7,70.32907911,-6.976
+2026-11-15 07:04,4,pearl-2,PEARL,Pearl,92,1.518199678,-2.854
+2026-11-15 07:04,5,hyperliquid,HYPE,Hyperliquid,10,65.54264493,-5.851
+2026-11-15 07:04,6,ethereum,ETH,Ethereum,2,1790.163056,-5.976
+2026-11-15 07:04,7,kaspa,KAS,Kaspa,81,0.02683180758,-2.78
+2026-11-15 07:04,8,pump-fun,PUMP,Pump.fun,57,0.002929015887,-14.12
+2026-11-15 07:04,9,avalanche-2,AVAX,Avalanche,25,7.229208894,-10.68
+2026-11-15 07:04,10,quant-network,QNT,Quant,41,146.1765338,-6.515
