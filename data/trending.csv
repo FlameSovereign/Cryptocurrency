@@ -569,3 +569,13 @@ time_utc,rank,id,symbol,name,market_cap_rank,price_usd,change_24h_pct
 2026-11-18 20:51,8,ethereum,ETH,Ethereum,2,1747.474529,-2.66
 2026-11-18 20:51,9,lighter,LIT,Lighter,87,2.716460413,-3.178
 2026-11-18 20:51,10,backpack,BP,Backpack,140,1.009115532,1.605
+2026-11-19 02:45,1,pearl-2,PEARL,Pearl,77,2.178719987,20.22
+2026-11-19 02:45,2,chainlink,LINK,Chainlink,17,9.010405401,-1.821
+2026-11-19 02:45,3,bitcoin,BTC,Bitcoin,1,62601.87981,-2.778
+2026-11-19 02:45,4,hyperliquid,HYPE,Hyperliquid,10,66.74933411,-2.757
+2026-11-19 02:45,5,backpack,BP,Backpack,141,1.012178089,1.617
+2026-11-19 02:45,6,lighter,LIT,Lighter,88,2.727388841,-6.029
+2026-11-19 02:45,7,ethereum,ETH,Ethereum,2,1769.650659,-1.985
+2026-11-19 02:45,8,canton-network,CC,Canton,25,0.08171670439,-0.6212
+2026-11-19 02:45,9,pudgy-penguins,PENGU,Pudgy Penguins,127,0.00468055995,-2.046
+2026-11-19 02:45,10,pippin,PIPPIN,pippin,825,0.01745527614,58.79
