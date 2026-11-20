@@ -2,36 +2,37 @@
   "bot": "btc-monkey",
   "created_ms": 1793403433926,
   "last": {
-    "candle_close": "2026-11-19 00:00:00",
-    "equity": 97.93494298049438,
+    "candle_close": "2026-11-20 00:00:00",
+    "equity": 97.69022798054314,
     "event": null,
-    "price": 61551.6,
-    "reason": "猴子说：跑！",
-    "signal": 0.0,
-    "target": 0.0
+    "price": 62010.2,
+    "reason": "猴子说：梭！",
+    "signal": 1.0,
+    "target": 1.0
   },
   "mode": "paper",
   "orders": [
     "t-ks-1734f1-mvvm3lxj",
-    "t-ks-1734f1-mw4aq2k0"
+    "t-ks-1734f1-mw4aq2k0",
+    "t-ks-1734f1-mwoe3agx"
   ],
-  "runs": 72,
+  "runs": 73,
   "strategy": "monkey",
   "symbol": "BTC/USDT",
   "timeframe": "1d",
-  "updated_ms": 1795123291892,
+  "updated_ms": 1795143501249,
   "wallet": {
     "budget": 100.0,
-    "cash": 97.93494298049438,
-    "entry_equity": null,
-    "entry_price": null,
+    "cash": 0.0,
+    "entry_equity": 97.93494298049438,
+    "entry_price": 62165.53617234468,
     "exit_lock": false,
-    "fees_paid": 0.39626241078255386,
-    "fills": 2,
+    "fees_paid": 0.5921322967435426,
+    "fills": 3,
     "halted": false,
-    "high_water": null,
+    "high_water": 62041.20509999999,
     "holding": null,
-    "qty": 0.0,
+    "qty": 0.0015753896613870484,
     "realized_pnl": -2.065057019505616
   }
 }
