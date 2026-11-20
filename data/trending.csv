@@ -599,3 +599,13 @@ time_utc,rank,id,symbol,name,market_cap_rank,price_usd,change_24h_pct
 2026-11-19 20:55,8,pudgy-penguins,PENGU,Pudgy Penguins,127,0.004595644324,-1.901
 2026-11-19 20:55,9,venice-token,VVV,Venice Token,67,22.24088326,5.836
 2026-11-19 20:55,10,peaq-2,PEAQ,peaq,372,0.02151719636,-8.666
+2026-11-20 02:31,1,bitcoin,BTC,Bitcoin,1,61449.98355,-1.978
+2026-11-20 02:31,2,near,NEAR,NEAR Protocol,23,3.03116435,-8.786
+2026-11-20 02:31,3,pudgy-penguins,PENGU,Pudgy Penguins,129,0.004451020773,-5.162
+2026-11-20 02:31,4,monero,XMR,Monero,12,495.7924488,-1.018
+2026-11-20 02:31,5,solana,SOL,Solana,7,71.79311423,-2.083
+2026-11-20 02:31,6,pearl-2,PEARL,Pearl,76,2.062568963,-5.327
+2026-11-20 02:31,7,anthropic-prestocks-2,ANTHROPIC,Anthropic PreStocks,433,576.1893583,-31.95
+2026-11-20 02:31,8,pump-fun,PUMP,Pump.fun,63,0.002513267925,-2.75
+2026-11-20 02:31,9,zcash,ZEC,Zcash,11,862.6336081,-4.792
+2026-11-20 02:31,10,terra-luna,LUNC,Terra Luna Classic,138,4.583291105e-05,2.177
