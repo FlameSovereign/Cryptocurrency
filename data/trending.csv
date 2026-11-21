@@ -629,3 +629,13 @@ time_utc,rank,id,symbol,name,market_cap_rank,price_usd,change_24h_pct
 2026-11-20 20:40,8,lighter,LIT,Lighter,90,2.33347487,-16.99
 2026-11-20 20:40,9,solana,SOL,Solana,7,68.36370999,-6.212
 2026-11-20 20:40,10,ethereum,ETH,Ethereum,2,1610.34913,-8.226
+2026-11-21 02:44,1,chunkee-the-manatee,CHUNKEE,Chunkee The Manatee,910,0.01445593112,3.497
+2026-11-21 02:44,2,bitcoin,BTC,Bitcoin,1,58641.23339,-4.949
+2026-11-21 02:44,3,near,NEAR,NEAR Protocol,23,2.735839014,-10.32
+2026-11-21 02:44,4,ethereum,ETH,Ethereum,2,1617.400576,-6.784
+2026-11-21 02:44,5,ripple,XRP,XRP,6,0.9033909612,-5.203
+2026-11-21 02:44,6,pudgy-penguins,PENGU,Pudgy Penguins,128,0.004332726687,-2.979
+2026-11-21 02:44,7,venice-token,VVV,Venice Token,66,20.96409732,0.9391
+2026-11-21 02:44,8,backpack,BP,Backpack,156,0.7321075933,-12.23
+2026-11-21 02:44,9,pearl-2,PEARL,Pearl,81,1.807849421,-9.301
+2026-11-21 02:44,10,hyperliquid,HYPE,Hyperliquid,10,59.75516973,-8.809
