@@ -659,3 +659,13 @@ time_utc,rank,id,symbol,name,market_cap_rank,price_usd,change_24h_pct
 2026-11-21 19:42,8,pudgy-penguins,PENGU,Pudgy Penguins,130,0.004269943614,-0.33
 2026-11-21 19:42,9,solana,SOL,Solana,7,70.63645646,3.49
 2026-11-21 19:42,10,uniswap,UNI,Uniswap,30,4.686175504,7.05
+2026-11-22 01:32,1,cash-cat,CASHCAT,Cash Cat,459,0.03981552238,3.437
+2026-11-22 01:32,2,venice-token,VVV,Venice Token,60,24.70766597,16.63
+2026-11-22 01:32,3,bitcoin,BTC,Bitcoin,1,60039.789,1.94
+2026-11-22 01:32,4,hyperliquid,HYPE,Hyperliquid,10,61.31564759,1.576
+2026-11-22 01:32,5,derive,DRV,Derive,113,0.3522529055,40.63
+2026-11-22 01:32,6,pi-network,PI,Pi Network,89,0.05190599638,2.67
+2026-11-22 01:32,7,solana,SOL,Solana,7,70.1735539,2.125
+2026-11-22 01:32,8,pudgy-penguins,PENGU,Pudgy Penguins,130,0.004283595245,-0.6522
+2026-11-22 01:32,9,ethereum,ETH,Ethereum,2,1682.668737,3.948
+2026-11-22 01:32,10,ondo-finance,ONDO,Ondo,54,0.281125164,0.9578
