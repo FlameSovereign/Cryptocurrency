@@ -3,9 +3,9 @@
   "created_ms": 1793403433926,
   "last": {
     "candle_close": "2026-11-22 00:00:00",
-    "equity": 93.68747792889094,
+    "equity": 95.91350352043084,
     "event": null,
-    "price": 59469.4,
+    "price": 60882.4,
     "reason": "猴子说：梭！",
     "signal": 1.0,
     "target": 1.0
@@ -16,11 +16,11 @@
     "t-ks-1734f1-mw4aq2k0",
     "t-ks-1734f1-mwoe3agx"
   ],
-  "runs": 80,
+  "runs": 81,
   "strategy": "monkey",
   "symbol": "BTC/USDT",
   "timeframe": "1d",
-  "updated_ms": 1795316255529,
+  "updated_ms": 1795345325042,
   "wallet": {
     "budget": 100.0,
     "cash": 0.0,
