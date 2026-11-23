@@ -689,3 +689,13 @@ time_utc,rank,id,symbol,name,market_cap_rank,price_usd,change_24h_pct
 2026-11-22 19:56,8,hyperliquid,HYPE,Hyperliquid,10,62.32333546,1.773
 2026-11-22 19:56,9,sui,SUI,Sui,32,0.6554130604,1.403
 2026-11-22 19:56,10,pearl-2,PEARL,Pearl,78,1.987464681,1.588
+2026-11-23 01:56,1,pearl-2,PEARL,Pearl,75,2.088664569,5.516
+2026-11-23 01:56,2,bitcoin,BTC,Bitcoin,1,60891.72507,1.439
+2026-11-23 01:56,3,venice-token,VVV,Venice Token,59,26.22003843,5.084
+2026-11-23 01:56,4,zcash,ZEC,Zcash,11,786.4376038,0.6132
+2026-11-23 01:56,5,sui,SUI,Sui,32,0.6487498137,0.3096
+2026-11-23 01:56,6,hyperliquid,HYPE,Hyperliquid,10,62.12207758,1.038
+2026-11-23 01:56,7,pudgy-penguins,PENGU,Pudgy Penguins,130,0.004232273267,-1.417
+2026-11-23 01:56,8,derive,DRV,Derive,108,0.3891166895,13.33
+2026-11-23 01:56,9,collector-crypt,CARDS,Collector Crypt,186,0.1605188602,2.191
+2026-11-23 01:56,10,solana,SOL,Solana,7,70.43560233,0.287
