@@ -799,3 +799,13 @@ time_utc,rank,id,symbol,name,market_cap_rank,price_usd,change_24h_pct
 2026-11-27 13:00,8,internet-computer,ICP,Internet Computer,65,2.045890368,2.419
 2026-11-27 13:00,9,pons,PONS,Pons,307,0.1095873781,26.41
 2026-11-27 13:00,10,sui,SUI,Sui,31,0.6863380682,2.631
+2026-11-27 23:40,1,pudgy-penguins,PENGU,Pudgy Penguins,128,0.004448803026,1.631
+2026-11-27 23:40,2,bitcoin,BTC,Bitcoin,1,59796.83469,-0.9693
+2026-11-27 23:40,3,zylo-ecosystem,ZYLO,Zylo Ecosystem,720,0.02463255085,1.212
+2026-11-27 23:40,4,portal-2,PORTAL,Portal,492,0.04043624663,225.4
+2026-11-27 23:40,5,hyperliquid,HYPE,Hyperliquid,10,63.30271808,2.122
+2026-11-27 23:40,6,monero,XMR,Monero,14,410.3457892,-9.846
+2026-11-27 23:40,7,pearl-2,PEARL,Pearl,84,1.710333108,-7.28
+2026-11-27 23:40,8,aero,AERO,Aero,123,0.3878241621,-2.698
+2026-11-27 23:40,9,ripple,XRP,XRP,6,0.945867776,0.4966
+2026-11-27 23:40,10,internet-computer,ICP,Internet Computer,66,1.990625198,-0.6482
