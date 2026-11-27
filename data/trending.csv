@@ -779,3 +779,13 @@ time_utc,rank,id,symbol,name,market_cap_rank,price_usd,change_24h_pct
 2026-11-26 17:14,8,venice-token,VVV,Venice Token,57,26.99556866,5.193
 2026-11-26 17:14,9,sky,SKY,Sky,67,0.04578658155,14.83
 2026-11-26 17:14,10,pump-fun,PUMP,Pump.fun,73,0.002569376781,8.034
+2026-11-27 01:53,1,pudgy-penguins,PENGU,Pudgy Penguins,129,0.004412078697,0.4677
+2026-11-27 01:53,2,zylo-ecosystem,ZYLO,Zylo Ecosystem,722,0.02433718478,11.64
+2026-11-27 01:53,3,zcash,ZEC,Zcash,11,701.8575292,-8.944
+2026-11-27 01:53,4,venice-token,VVV,Venice Token,60,26.15066903,-13.22
+2026-11-27 01:53,5,monero,XMR,Monero,13,461.8444864,-10.91
+2026-11-27 01:53,6,solana,SOL,Solana,7,71.28155495,0.6501
+2026-11-27 01:53,7,bitcoin,BTC,Bitcoin,1,60638.18265,-0.009255
+2026-11-27 01:53,8,pump-fun,PUMP,Pump.fun,73,0.002604224091,-0.658
+2026-11-27 01:53,9,pearl-2,PEARL,Pearl,82,1.839972709,-8.74
+2026-11-27 01:53,10,ethereum,ETH,Ethereum,2,1697.597515,-0.01733
